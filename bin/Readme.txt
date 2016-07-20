@@ -1,6 +1,6 @@
 HOSTS Manager
 
-Console tool for sysadmins and other peoples who need for autoupdate "hosts" file.
+Console tool for sysadmins and other peoples who need to autoupdate "hosts" file.
 
 Command line:
 /ip - destination ip address to be set as resolve for all domains (default: 0.0.0.0)
