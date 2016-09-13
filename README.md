@@ -1,5 +1,7 @@
 # HOSTS Manager
 
+![HOSTS Manager](http://www.henrypp.org/images/hostsmgr.jpg)
+
 Console tool for sysadmins and other peoples who need to autoupdate "hosts" file.
 
 ### Command line:
