@@ -1,6 +1,6 @@
-# HOSTS Manager
+# hostsmgr
 
-![HOSTS Manager](http://www.henrypp.org/images/hostsmgr.png?fix)
+![hostsmgr](http://www.henrypp.org/images/hostsmgr.png?fix)
 
 Console tool for sysadmins and other peoples who need to autoupdate "hosts" file.
 
