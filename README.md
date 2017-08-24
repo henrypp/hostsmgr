@@ -1,6 +1,6 @@
 # hostsmgr
 
-![hostsmgr](http://www.henrypp.org/images/hostsmgr.png?fix)
+![hostsmgr](https://www.henrypp.org/images/hostsmgr.png)
 
 Console tool for sysadmins and other peoples who need to autoupdate "hosts" file.
 
@@ -9,7 +9,7 @@ Console tool for sysadmins and other peoples who need to autoupdate "hosts" file
 - /path - destination hosts file location; environment variables and relative paths are supported (default: readed from Windows registry)
 - /os - new line used in "hosts" file; "win" for Windows (crlf), "linux" - for Linux (lf), "mac" for Mac OS (cr)
 
-Website: www.henrypp.org<br />
+Website: [www.henrypp.org](https://www.henrypp.org)<br />
 Support: support@henrypp.org<br />
 <br />
 (c) 2016 Henry++
