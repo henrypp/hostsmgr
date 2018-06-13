@@ -1,4 +1,4 @@
-HOSTS Manager
+hostsmgr
 
 Console tool for sysadmins and other peoples who need to autoupdate "hosts" file.
 
@@ -10,4 +10,4 @@ Command line:
 Website: www.henrypp.org
 Support: support@henrypp.org
 
-(c) 2016 Henry++
+(c) 2016-2018 Henry++
