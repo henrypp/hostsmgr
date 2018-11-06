@@ -129,7 +129,7 @@ bool _app_parsefile (HANDLE hreadfile, HANDLE hwritefile, ARRAY_HASHES_LIST& pha
 
 void _app_startupdate ()
 {
-	const HINTERNET hsession = _r_inet_createsession (app.GetUserAgent ());
+	const HINTERNET hsession = _r_inet_createsession (app.GetUserAgent (), app.ConfigGet (L"Proxy", nullptr));
 
 	if (hsession)
 	{
@@ -137,17 +137,22 @@ void _app_startupdate ()
 
 		// predefined whitelisted hosts
 		{
-			exclude_list[_r_str_hash (L"local")] = true;
-			exclude_list[_r_str_hash (L"localhost")] = true;
-			exclude_list[_r_str_hash (L"localhost.localdomain")] = true;
-			exclude_list[_r_str_hash (L"broadcasthost")] = true;
-			exclude_list[_r_str_hash (L"notice")] = true;
-			exclude_list[_r_str_hash (L"ip6-loopback")] = true;
-			exclude_list[_r_str_hash (L"ip6-localnet")] = true;
-			exclude_list[_r_str_hash (L"ip6-mcastprefix")] = true;
-			exclude_list[_r_str_hash (L"ip6-allnodes")] = true;
-			exclude_list[_r_str_hash (L"ip6-allrouters")] = true;
-			exclude_list[_r_str_hash (L"ip6-allhosts")] = true;
+			static LPCWSTR exclude_hosts[] = {
+				L"local",
+				L"localhost",
+				L"localhost.localdomain",
+				L"broadcasthost",
+				L"notice",
+				L"ip6-loopback",
+				L"ip6-localnet",
+				L"ip6-mcastprefix",
+				L"ip6-allnodes",
+				L"ip6-allrouters",
+				L"ip6-allhosts",
+			};
+
+			for (size_t i = 0; i < _countof (exclude_hosts); i++)
+				exclude_list[_r_str_hash (exclude_hosts[i])] = true;
 		}
 
 		const HANDLE hhosts = CreateFile (_r_fmt (L"%s.tmp", hosts_file), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
