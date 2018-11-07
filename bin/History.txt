@@ -1,5 +1,6 @@
-v1.2 (x November 2018)
-- added backup original hosts before replacing
+v1.2 (7 November 2018)
+- added backup original hosts file before replacing (use /nobackup to skip)
+- added print help for start without arguments
 - added program icon
 - increased speed
 
