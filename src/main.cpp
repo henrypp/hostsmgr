@@ -14,6 +14,8 @@ rapp app (APP_NAME, APP_NAME_SHORT, APP_VERSION, APP_COPYRIGHT);
 
 typedef std::unordered_map<size_t, bool> ARRAY_HASHES_LIST;
 
+bool is_nobackup = false;
+
 std::vector<rstring> sources_arr;
 
 WCHAR hosts_file[MAX_PATH] = {0};
@@ -28,6 +30,11 @@ WCHAR eol[3] = {0};
 void _app_printerror (LPCWSTR text, DWORD code)
 {
 	wprintf (L"ERROR: %s [err: 0x%06X]\r\n\r\n", text, code);
+}
+
+void _app_printhelp ()
+{
+	wprintf (L"Command line:\r\n/ip - ip address to be set as resolve for all domains (default: 0.0.0.0)\r\n/path - \"hosts\" file location; env. variables and relative paths are supported (default: current directory)\r\n/os - new line format; \"win\" for Windows (crlf), \"linux\" - for Linux (lf), \"mac\" for Mac OS (cr)\r\n/nobackup - do not create backup copy for \"hosts\" file\r\n");
 }
 
 void _app_writeunicodeasansi (HANDLE hfile, LPCWSTR ustring, DWORD length)
@@ -50,27 +57,28 @@ void _app_writeunicodeasansi (HANDLE hfile, LPCWSTR ustring, DWORD length)
 
 size_t _app_parseline (rstring& line)
 {
-	size_t hash = 0;
+	line.Trim (L"\r\n\t\\/ ");
 
-	line.Trim (L"\r\n\t ");
 	const size_t comment_start_pos = line.Find (L'#');
 	const size_t comment_end_pos = line.ReverseFind (L'#');
 
-	if (comment_end_pos != 0)
+	if (comment_start_pos == 0 || comment_end_pos == 0)
+		return 0;
+
+	size_t hash = 0;
+
+	if (comment_end_pos != rstring::npos)
+		line.Mid (0, comment_end_pos);
+
+	line.Replace (L"\t", L" ").Trim (L"\r\n\\/ ");
+
+	if (!line.IsEmpty ())
 	{
-		if (comment_end_pos != rstring::npos)
-			line.Mid (0, comment_end_pos);
+		const size_t space_pos = line.Find (L' ');
+		const rstring host = space_pos == rstring::npos ? line : line.Midded (line.ReverseFind (L' ') + 1);
 
-		line.Replace (L"\t", L" ").Trim (L"\r\n ");
-
-		if (!line.IsEmpty ())
-		{
-			const size_t space_pos = line.Find (L' ');
-			const rstring host = space_pos == rstring::npos ? line : line.Midded (line.ReverseFind (L' ') + 1);
-
-			line = host;
-			hash = host.Hash ();
-		}
+		line = host;
+		hash = host.Hash ();
 	}
 
 	return hash;
@@ -268,14 +276,14 @@ void _app_startupdate ()
 
 								SetFileTime (hcache, &remote_timestamp, &remote_timestamp, &remote_timestamp);
 
-								StringCchCopy (result, _countof (result), L"okay (from url)");
+								StringCchCopy (result, _countof (result), L"OKAY!");
 
 								delete[] buffera;
 							}
 						}
 						else
 						{
-							StringCchCopy (result, _countof (result), L"okay (from cache)");
+							StringCchCopy (result, _countof (result), L"OKAY!");
 						}
 
 						_app_parsefile (hcache, hhosts, exclude_list, true);
@@ -296,7 +304,9 @@ void _app_startupdate ()
 
 			SetFileAttributes (hosts_file, FILE_ATTRIBUTE_NORMAL);
 
-			_r_fs_move (hosts_file, _r_fmt (L"%s.bak", hosts_file));
+			if (!is_nobackup)
+				_r_fs_move (hosts_file, _r_fmt (L"%s.bak", hosts_file));
+
 			_r_fs_move (_r_fmt (L"%s.tmp", hosts_file), hosts_file);
 		}
 
@@ -304,7 +314,7 @@ void _app_startupdate ()
 	}
 }
 
-void _app_parsearguments (INT argc, LPCWSTR argv[])
+bool _app_parsearguments (INT argc, LPCWSTR argv[])
 {
 	for (int i = 0; i < argc; i++)
 	{
@@ -316,6 +326,10 @@ void _app_parsearguments (INT argc, LPCWSTR argv[])
 			if (name.CompareNoCase (L"ip") == 0)
 			{
 				StringCchCopy (hosts_destination, _countof (hosts_destination), value);
+			}
+			else if (name.CompareNoCase (L"nobackup") == 0)
+			{
+				is_nobackup = true;
 			}
 			else if (name.CompareNoCase (L"path") == 0)
 			{
@@ -345,8 +359,15 @@ void _app_parsearguments (INT argc, LPCWSTR argv[])
 					eol[1] = 0;
 				}
 			}
+			else if (name.At (0) == L'h' || name.CompareNoCase (L"help") == 0)
+			{
+				_app_printhelp ();
+				return false;
+			}
 		}
 	}
+
+	return true;
 }
 
 bool _app_setdefaults ()
@@ -420,15 +441,21 @@ INT __cdecl wmain (INT argc, LPCWSTR argv[])
 
 	wprintf (L"%s %s\r\n%s\r\n\r\n", APP_NAME, APP_VERSION, APP_COPYRIGHT);
 
-	_app_parsearguments (argc, argv);
-	_app_setdefaults ();
+	if (argc <= 1)
+	{
+		_app_printhelp ();
+	}
+	else
+	{
+		if (_app_parsearguments (argc, argv))
+		{
+			_app_setdefaults ();
 
-	wprintf (L"Path: %s\r\nSources: %s\r\nUserlist: %s\r\nWhitelist: %s\r\nDestination: %s\r\n\r\n", hosts_file, sources_file, userlist_file, whitelist_file, hosts_destination);
+			wprintf (L"Path: %s\r\nSources: %s\r\nUserlist: %s\r\nWhitelist: %s\r\nDestination: %s\r\n\r\n", hosts_file, sources_file, userlist_file, whitelist_file, hosts_destination);
 
-	_app_startupdate ();
-
-	wprintf (L"Press any key to continue...\r\n");
-	while (!_getwch ());
+			_app_startupdate ();
+		}
+	}
 
 	return ERROR_SUCCESS;
 }
