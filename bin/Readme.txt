@@ -11,4 +11,4 @@ Command line:
 Website: www.henrypp.org
 Support: support@henrypp.org
 
-(c) 2016-2018 Henry++
+(c) 2016-2019 Henry++
