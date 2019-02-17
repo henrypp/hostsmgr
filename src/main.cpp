@@ -1,7 +1,11 @@
 // hostsmgr
-// Copyright (c) 2016-2018 Henry++
+// Copyright (c) 2016-2019 Henry++
 
+#include <winsock2.h>
+#include <ws2ipdef.h>
+#include <windns.h>
 #include <windows.h>
+#include <iphlpapi.h>
 #include <subauth.h>
 
 #include "main.hpp"
@@ -55,6 +59,23 @@ void _app_writeunicodeasansi (HANDLE hfile, LPCWSTR ustring, DWORD length)
 	}
 }
 
+bool _app_ruleishost (LPCWSTR rule)
+{
+	if (!rule || !rule[0])
+		return false;
+
+	NET_ADDRESS_INFO ni;
+	SecureZeroMemory (&ni, sizeof (ni));
+
+	USHORT port = 0;
+	BYTE prefix_length = 0;
+
+	static const DWORD types = NET_STRING_NAMED_ADDRESS | NET_STRING_NAMED_SERVICE;
+	const DWORD errcode = ParseNetworkString (rule, types, &ni, &port, &prefix_length);
+
+	return (errcode == ERROR_SUCCESS);
+}
+
 size_t _app_parseline (rstring& line)
 {
 	line.Trim (L"\r\n\t\\/ ");
@@ -76,6 +97,9 @@ size_t _app_parseline (rstring& line)
 	{
 		const size_t space_pos = line.Find (L' ');
 		const rstring host = space_pos == rstring::npos ? line : line.Midded (line.ReverseFind (L' ') + 1);
+
+		if (!_app_ruleishost (host))
+			return 0;
 
 		line = host;
 		hash = host.Hash ();
@@ -230,7 +254,7 @@ void _app_startupdate ()
 				HINTERNET hconnect = nullptr;
 				HINTERNET hrequest = nullptr;
 
-				if (!_r_inet_openurl (hsession, sources_arr.at (i), &hconnect, &hrequest, nullptr))
+				if (!_r_inet_openurl (hsession, sources_arr.at (i), _r_inet_getproxyconfiguration (app.ConfigGet (L"Proxy", nullptr)), &hconnect, &hrequest, nullptr))
 				{
 					sources_arr.at (i).Clear ();
 					StringCchPrintf (result, _countof (result), L"bad url (0x%.8lx.)", GetLastError ());
