@@ -55,7 +55,7 @@ void _app_writeunicodeasansi (HANDLE hfile, LPCWSTR ustring, DWORD length)
 		DWORD written = 0;
 		WriteFile (hfile, buffer, length, &written, nullptr);
 
-		delete[] buffer;
+		SAFE_DELETE_ARRAY (buffer);
 	}
 }
 
@@ -108,7 +108,7 @@ size_t _app_parseline (rstring& line)
 	return hash;
 }
 
-bool _app_parsefile (HANDLE hreadfile, HANDLE hwritefile, ARRAY_HASHES_LIST& phashes, bool is_write)
+bool _app_parsefile (HANDLE hreadfile, HANDLE hwritefile, ARRAY_HASHES_LIST& pwhitelist_hashes)
 {
 	const size_t length = (size_t)_r_fs_size (hreadfile);
 
@@ -122,7 +122,7 @@ bool _app_parsefile (HANDLE hreadfile, HANDLE hwritefile, ARRAY_HASHES_LIST& pha
 		if (_r_fs_readfile (hreadfile, buffera, length))
 		{
 			rstring content = buffera;
-			delete[] buffera;
+			SAFE_DELETE_ARRAY (buffera);
 
 			if (content.At (0) == L'<')
 				return false;
@@ -135,13 +135,13 @@ bool _app_parsefile (HANDLE hreadfile, HANDLE hwritefile, ARRAY_HASHES_LIST& pha
 
 				const size_t hash = _app_parseline (line);
 
-				if (!hash || line.IsEmpty () || line.At (0) == L'#' || phashes.find (hash) != phashes.end ())
+				if (!hash || line.IsEmpty () || line.At (0) == L'#' || pwhitelist_hashes.find (hash) != pwhitelist_hashes.end ())
 					continue;
 
 				// remember entries to prevent duplicates
-				phashes[hash] = true;
+				pwhitelist_hashes[hash] = true;
 
-				if (is_write)
+				if (hwritefile && hwritefile != INVALID_HANDLE_VALUE)
 				{
 					rstring buffer;
 					buffer.Format (L"%s %s%s", hosts_destination, line.GetString (), eol);
@@ -152,7 +152,7 @@ bool _app_parsefile (HANDLE hreadfile, HANDLE hwritefile, ARRAY_HASHES_LIST& pha
 		}
 		else
 		{
-			delete[] buffera;
+			SAFE_DELETE_ARRAY (buffera);
 		}
 	}
 
@@ -215,32 +215,34 @@ void _app_startupdate ()
 			}
 
 			// parse whitelist
+			if (_r_fs_exists (whitelist_file))
 			{
-				const HANDLE hwhitelist = CreateFile (whitelist_file, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+				const HANDLE hfile = CreateFile (whitelist_file, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
-				if (hwhitelist == INVALID_HANDLE_VALUE)
+				if (hfile == INVALID_HANDLE_VALUE)
 				{
 					_app_printerror (_r_path_compact (whitelist_file, 64), GetLastError ());
 				}
 				else
 				{
-					_app_parsefile (hwhitelist, hhosts, exclude_list, false);
-					CloseHandle (hwhitelist);
+					_app_parsefile (hfile, nullptr, exclude_list);
+					CloseHandle (hfile);
 				}
 			}
 
 			// parse userlist
+			if (_r_fs_exists (userlist_file))
 			{
-				const HANDLE huserlist = CreateFile (userlist_file, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+				const HANDLE hfile = CreateFile (userlist_file, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
-				if (huserlist == INVALID_HANDLE_VALUE)
+				if (hfile == INVALID_HANDLE_VALUE)
 				{
 					_app_printerror (_r_path_compact (userlist_file, 64), GetLastError ());
 				}
 				else
 				{
-					_app_parsefile (huserlist, hhosts, exclude_list, true);
-					CloseHandle (huserlist);
+					_app_parsefile (hfile, hhosts, exclude_list);
+					CloseHandle (hfile);
 				}
 			}
 
@@ -302,7 +304,7 @@ void _app_startupdate ()
 
 								StringCchCopy (result, _countof (result), L"OKAY!");
 
-								delete[] buffera;
+								SAFE_DELETE_ARRAY (buffera);
 							}
 						}
 						else
@@ -310,7 +312,7 @@ void _app_startupdate ()
 							StringCchCopy (result, _countof (result), L"OKAY!");
 						}
 
-						_app_parsefile (hcache, hhosts, exclude_list, true);
+						_app_parsefile (hcache, hhosts, exclude_list);
 
 						CloseHandle (hcache);
 					}
@@ -449,7 +451,7 @@ bool _app_setdefaults ()
 					}
 				}
 
-				delete[] buffer;
+				SAFE_DELETE_ARRAY (buffer);
 			}
 		}
 
