@@ -110,12 +110,12 @@ size_t _app_parseline (rstring& line)
 
 bool _app_parsefile (HANDLE hreadfile, HANDLE hwritefile, ARRAY_HASHES_LIST& pwhitelist_hashes)
 {
-	const size_t length = (size_t)_r_fs_size (hreadfile);
+	const DWORD64 length = _r_fs_size (hreadfile);
 
 	if (!length)
 		return false;
 
-	LPSTR buffera = new CHAR[length + 1];
+	LPSTR buffera = new CHAR[(size_t)length + 1];
 
 	if (buffera)
 	{
@@ -251,7 +251,7 @@ void _app_startupdate ()
 			for (size_t i = 0; i < sources_arr.size (); i++)
 			{
 				WCHAR result[64] = {0};
-				wprintf (L"%zu/%zu - %s...", i + 1, sources_arr.size (), sources_arr.at (i).GetString ());
+				wprintf (L"%" PR_SIZET L"/%" PR_SIZET L" - %s...", i + 1, sources_arr.size (), sources_arr.at (i).GetString ());
 
 				HINTERNET hconnect = nullptr;
 				HINTERNET hrequest = nullptr;
@@ -259,7 +259,7 @@ void _app_startupdate ()
 				if (!_r_inet_openurl (hsession, sources_arr.at (i), _r_inet_getproxyconfiguration (app.ConfigGet (L"Proxy", nullptr)), &hconnect, &hrequest, nullptr))
 				{
 					sources_arr.at (i).Clear ();
-					StringCchPrintf (result, _countof (result), L"bad url (0x%.8lx.)", GetLastError ());
+					StringCchPrintf (result, _countof (result), L"bad url (0x%.8" PRIX32 L".)", GetLastError ());
 				}
 				else
 				{
@@ -274,7 +274,7 @@ void _app_startupdate ()
 					SystemTimeToFileTime (&lastmod, &remote_timestamp);
 
 					WCHAR path[MAX_PATH] = {0};
-					StringCchPrintf (path, _countof (path), L"%s\\%zu.txt", cache_dir, sources_arr.at (i).Hash ());
+					StringCchPrintf (path, _countof (path), L"%s\\%" PR_SIZET L".txt", cache_dir, sources_arr.at (i).Hash ());
 
 					SetFileAttributes (path, FILE_ATTRIBUTE_NORMAL);
 					const HANDLE hcache = CreateFile (path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_READONLY, nullptr);
@@ -285,27 +285,24 @@ void _app_startupdate ()
 
 						if (!_r_fs_size (hcache) || CompareFileTime (&local_timestamp, &remote_timestamp) == -1)
 						{
-							const size_t length = (_R_BUFFER_LENGTH * 4);
+							const DWORD length = (_R_BUFFER_LENGTH * 4);
 							LPSTR buffera = new CHAR[length];
 
-							if (buffera)
+							DWORD readed = 0, written = 0;
+
+							while (true)
 							{
-								DWORD readed = 0, written = 0;
+								if (!_r_inet_readrequest (hrequest, buffera, length - 1, &readed, nullptr))
+									break;
 
-								while (true)
-								{
-									if (!_r_inet_readrequest (hrequest, buffera, length - 1, &readed, nullptr))
-										break;
-
-									WriteFile (hcache, buffera, readed, &written, nullptr);
-								}
-
-								SetFileTime (hcache, &remote_timestamp, &remote_timestamp, &remote_timestamp);
-
-								StringCchCopy (result, _countof (result), L"OKAY!");
-
-								SAFE_DELETE_ARRAY (buffera);
+								WriteFile (hcache, buffera, readed, &written, nullptr);
 							}
+
+							SetFileTime (hcache, &remote_timestamp, &remote_timestamp, &remote_timestamp);
+
+							StringCchCopy (result, _countof (result), L"OKAY!");
+
+							SAFE_DELETE_ARRAY (buffera);
 						}
 						else
 						{
