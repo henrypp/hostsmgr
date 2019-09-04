@@ -6,8 +6,8 @@
 
 #define APP_NAME L"hostsmgr"
 #define APP_NAME_SHORT L"hostsmgr"
-#define APP_VERSION L"1.2"
-#define APP_VERSION_RES 1,2,0,0
-#define APP_COPYRIGHT L"(c) 2016-2019 " _APP_AUTHOR L". All Rights Reserved."
+#define APP_VERSION L"1.3"
+#define APP_VERSION_RES 1,3,0,0
+#define APP_COPYRIGHT L"(c) 2016-2019 " _APP_AUTHOR L". All Rights Reversed."
 
 #endif // __APP_H__
