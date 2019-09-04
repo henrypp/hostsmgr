@@ -157,8 +157,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <LargeAddressAware>true</LargeAddressAware>
       <SubSystem>Console</SubSystem>
-      <MinimumRequiredVersion>
-      </MinimumRequiredVersion>
+      <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
       <TurnOffAssemblyGeneration>
       </TurnOffAssemblyGeneration>
       <ImageHasSafeExceptionHandlers>
@@ -206,8 +205,7 @@
       <ImageHasSafeExceptionHandlers>
       </ImageHasSafeExceptionHandlers>
       <AdditionalOptions>/OPT:NOLBR %(AdditionalOptions)</AdditionalOptions>
-      <MinimumRequiredVersion>
-      </MinimumRequiredVersion>
+      <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -249,8 +247,7 @@
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <LargeAddressAware>true</LargeAddressAware>
       <SubSystem>Console</SubSystem>
-      <MinimumRequiredVersion>
-      </MinimumRequiredVersion>
+      <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
       <TurnOffAssemblyGeneration>
       </TurnOffAssemblyGeneration>
       <ImageHasSafeExceptionHandlers>
@@ -302,8 +299,7 @@
       <ImageHasSafeExceptionHandlers>
       </ImageHasSafeExceptionHandlers>
       <AdditionalOptions>/OPT:NOLBR %(AdditionalOptions)</AdditionalOptions>
-      <MinimumRequiredVersion>
-      </MinimumRequiredVersion>
+      <MinimumRequiredVersion>5.02</MinimumRequiredVersion>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>_UNICODE;UNICODE;_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -321,11 +317,8 @@
     <ClInclude Include="..\routine\routine.hpp" />
     <ClInclude Include="..\routine\rstring.hpp" />
     <ClInclude Include="src\app.hpp" />
-    <ClInclude Include="src\global.hpp" />
     <ClInclude Include="src\main.hpp" />
     <ClInclude Include="src\resource.hpp" />
-    <ClInclude Include="src\timer.hpp" />
-    <ClInclude Include="src\wfp.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\resource.rc" />
