@@ -1,1 +1,4 @@
 # New line for each host
+
+#www.google.com
+#www.twitter.com

@@ -1,3 +1,4 @@
 # New line for each host
-example.domain.com
-*.domain-wildcard.com
+
+#example.domain.com
+#*.domain-wildcard.com
