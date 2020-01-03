@@ -1,4 +1,4 @@
 @echo off
 
 cd ..\builder
-build "" hostsmgr 1.3
+build "" hostsmgr 2.0
