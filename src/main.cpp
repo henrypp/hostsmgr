@@ -188,7 +188,7 @@ size_t _app_parsefile (HANDLE hfile, HANDLE hwritefile, ARRAY_HASHES_LIST& pwhit
 
 					if (host_hash && host_name[0] != UNICODE_NULL && host_name[0] != L'#' && pwhitelist_hashes.find (host_hash) == pwhitelist_hashes.end ())
 					{
-						if (hwritefile && hwritefile != INVALID_HANDLE_VALUE)
+						if (_r_fs_isvalidhandle (hwritefile))
 						{
 							bool is_whitelisted = false;
 
@@ -294,7 +294,7 @@ void _app_startupdate ()
 	// parse sources list
 	HANDLE hsources_file = CreateFile (config.sources_file, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
-	if (hsources_file == INVALID_HANDLE_VALUE)
+	if (!_r_fs_isvalidhandle (hsources_file))
 	{
 		_app_printdata (Facility::Error, L"open failure", _r_path_getfilename (config.sources_file), GetLastError ());
 		return;
@@ -346,7 +346,7 @@ void _app_startupdate ()
 
 		_app_printdata (Facility::Success, _r_fmt (L"%s lists loaded", _r_fmt_number (sources_arr.size ())), nullptr, 0);
 
-		SAFE_DELETE_HANDLE (hsources_file);
+		CloseHandle (hsources_file);
 	}
 
 	size_t total_hosts = 0;
@@ -354,7 +354,7 @@ void _app_startupdate ()
 
 	HANDLE hosts_file = CreateFile (config.hosts_file_temp, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY, nullptr);
 
-	if (hosts_file == INVALID_HANDLE_VALUE)
+	if (!_r_fs_isvalidhandle (hosts_file))
 	{
 		_app_printdata (Facility::Error, L"create failure", _r_path_getfilename (config.hosts_file_temp), GetLastError ());
 		return;
@@ -383,7 +383,7 @@ void _app_startupdate ()
 
 		HANDLE hfile = CreateFile (config.whitelist_file, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
-		if (hfile == INVALID_HANDLE_VALUE)
+		if (!_r_fs_isvalidhandle (hfile))
 		{
 			_app_printdata (Facility::Error, L"open failure", _r_path_getfilename (config.whitelist_file), GetLastError ());
 		}
@@ -393,7 +393,7 @@ void _app_startupdate ()
 
 			_app_printdata (Facility::Success, _r_fmt (L"%s hosts, %s masks", _r_fmt_number (count), _r_fmt_number (exclude_list_mask.size ())), nullptr, 0);
 
-			SAFE_DELETE_HANDLE (hfile);
+			CloseHandle (hfile);
 		}
 	}
 
@@ -403,7 +403,7 @@ void _app_startupdate ()
 
 		HANDLE hfile = CreateFile (config.userlist_file, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
-		if (hfile == INVALID_HANDLE_VALUE)
+		if (!_r_fs_isvalidhandle (hfile))
 		{
 			_app_printdata (Facility::Error, L"open failure", _r_path_getfilename (config.userlist_file), GetLastError ());
 		}
@@ -416,7 +416,7 @@ void _app_startupdate ()
 			total_hosts += count;
 			total_sources += 1;
 
-			SAFE_DELETE_HANDLE (hfile);
+			CloseHandle (hfile);
 		}
 	}
 
@@ -446,7 +446,7 @@ void _app_startupdate ()
 		{
 			HANDLE hfile = CreateFile (rlink, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 
-			if (hfile == INVALID_HANDLE_VALUE)
+			if (!_r_fs_isvalidhandle (hfile))
 			{
 				_app_printdata (Facility::Error, L"open failure", nullptr, GetLastError ());
 			}
@@ -459,7 +459,7 @@ void _app_startupdate ()
 
 				_app_printdata (Facility::Success, _r_fmt (L"%s hosts", _r_fmt_number (count)), nullptr, 0);
 
-				SAFE_DELETE_HANDLE (hfile);
+				CloseHandle (hfile);
 			}
 		}
 		else
@@ -474,7 +474,7 @@ void _app_startupdate ()
 			SetFileAttributes (path, FILE_ATTRIBUTE_NORMAL);
 			HANDLE hfile = CreateFile (path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, nullptr, config.is_nocache ? CREATE_ALWAYS : OPEN_ALWAYS, config.is_nocache ? FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE : FILE_ATTRIBUTE_TEMPORARY, nullptr);
 
-			if (hfile == INVALID_HANDLE_VALUE)
+			if (!_r_fs_isvalidhandle (hfile))
 			{
 				_app_printdata (Facility::Error, L"open failure", _r_path_getfilename (path), GetLastError ());
 			}
@@ -531,7 +531,7 @@ void _app_startupdate ()
 
 				_app_printdata (count ? Facility::Success : Facility::Error, _r_fmt (L"%s hosts", _r_fmt_number (count)), nullptr, 0);
 
-				SAFE_DELETE_HANDLE (hfile);
+				CloseHandle (hfile);
 
 				if (!config.is_nocache)
 					SetFileAttributes (path, FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_TEMPORARY);
@@ -542,7 +542,7 @@ void _app_startupdate ()
 	_r_inet_close (hsession);
 
 	SAFE_DELETE_ARRAY (buffera);
-	SAFE_DELETE_HANDLE (hosts_file);
+	CloseHandle (hosts_file);
 
 	SetFileAttributes (config.hosts_file, FILE_ATTRIBUTE_NORMAL);
 
@@ -667,7 +667,7 @@ INT _cdecl wmain (INT argc, LPCWSTR argv[])
 	if (app.Initialize (APP_NAME, APP_NAME_SHORT, APP_VERSION, APP_COPYRIGHT))
 	{
 		SetConsoleTitle (APP_NAME);
-
+		NtCurrentProcess ();
 		config.houtput = GetStdHandle (STD_OUTPUT_HANDLE);
 
 		CONSOLE_SCREEN_BUFFER_INFO Info = {0};
