@@ -667,7 +667,7 @@ INT _cdecl wmain (INT argc, LPCWSTR argv[])
 	if (app.Initialize (APP_NAME, APP_NAME_SHORT, APP_VERSION, APP_COPYRIGHT))
 	{
 		SetConsoleTitle (APP_NAME);
-		NtCurrentProcess ();
+
 		config.houtput = GetStdHandle (STD_OUTPUT_HANDLE);
 
 		CONSOLE_SCREEN_BUFFER_INFO Info = {0};
