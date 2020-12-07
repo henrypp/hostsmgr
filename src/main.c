@@ -229,10 +229,13 @@ SIZE_T _app_parsefile (HANDLE hfile, HANDLE hwritefile, PR_HASHTABLE exclude_lis
 									buffer = _r_format_string (L"%s %s%s", _r_obj_getstringorempty (config.hosts_destination), host_string->buffer, config.eol);
 								}
 
-								_app_writeunicodeasansi (hwritefile, buffer->buffer);
-								_r_obj_dereference (buffer);
+								if (buffer)
+								{
+									_app_writeunicodeasansi (hwritefile, buffer->buffer);
+									_r_obj_dereference (buffer);
 
-								hosts_count += 1;
+									hosts_count += 1;
+								}
 							}
 						}
 						else
@@ -312,7 +315,7 @@ VOID _app_parsesource (HINTERNET hsession, HANDLE hosts_file, LPCWSTR source, PR
 		}
 		else
 		{
-			_r_str_printf (path, RTL_NUMBER_OF (path), L"%s\\%" TEXT (PR_SIZE_T) L".txt", _r_obj_getstring (config.cache_dir), source_hash);
+			_r_str_printf (path, RTL_NUMBER_OF (path), L"%s\\%" TEXT (PR_SIZE_T) L".txt", _r_obj_getstringorempty (config.cache_dir), source_hash);
 		}
 
 		SetFileAttributes (path, FILE_ATTRIBUTE_NORMAL);
@@ -625,7 +628,7 @@ VOID _app_startupdate ()
 		}
 	}
 
-	if (!config.is_nocache && config.cache_dir)
+	if (!config.is_nocache && !_r_obj_isstringempty (config.cache_dir))
 		_r_fs_mkdir (config.cache_dir->buffer);
 
 	LONG64 start_time = PerformanceCounter ();
