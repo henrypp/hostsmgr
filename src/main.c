@@ -300,7 +300,7 @@ VOID _app_parsesource (HINTERNET hsession, HANDLE hosts_file, LPCWSTR source, PR
 	}
 	else
 	{
-		source_hash = _r_str_hash (source);
+		source_hash = _r_str_hash (source, _r_str_length (source));
 
 		WCHAR path[MAX_PATH];
 
@@ -448,7 +448,7 @@ VOID _app_startupdate ()
 	exclude_list = _r_obj_createhashtableex (sizeof (void*), 0x1000, NULL);
 
 	for (SIZE_T i = 0; i < RTL_NUMBER_OF (exclude_hosts); i++)
-		_r_obj_addhashtableitem2 (exclude_list, _r_str_hash (exclude_hosts[i]), NULL);
+		_r_obj_addhashtableitem2 (exclude_list, _r_str_hash (exclude_hosts[i], _r_str_length (exclude_hosts[i])), NULL);
 
 	PR_LIST sources_arr = _r_obj_createlistex (0x50, &_r_obj_dereference);
 
@@ -775,7 +775,7 @@ INT _cdecl wmain (INT argc, LPCWSTR argv[])
 
 	SetConsoleTitle (APP_NAME);
 
-	if (_r_app_initialize (APP_NAME, APP_NAME_SHORT, APP_VERSION, APP_COPYRIGHT))
+	if (_r_app_initialize ())
 	{
 		wprintf (L"%s %s\r\n%s\r\n\r\n", APP_NAME, APP_VERSION, APP_COPYRIGHT);
 
