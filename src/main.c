@@ -189,7 +189,7 @@ SIZE_T _app_parsefile (HANDLE hfile, HANDLE hwritefile, PR_HASHTABLE exclude_lis
 
 			while (token)
 			{
-				StrTrimA (token, "\r\n\t\\/ ");
+				_r_str_trim_a (token, "\r\n\t\\/ ");
 				PR_STRING host_string = _r_str_multibyte2unicode (token);
 
 				if (host_string)
@@ -478,7 +478,7 @@ VOID _app_startupdate ()
 
 				while (token)
 				{
-					StrTrimA (token, "\r\n\t\\/ ");
+					_r_str_trim_a (token, "\r\n\t\\/ ");
 
 					PR_STRING url_string = _r_str_multibyte2unicode (token);
 
