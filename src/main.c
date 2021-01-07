@@ -203,7 +203,7 @@ SIZE_T _app_parsefile (HANDLE hfile, HANDLE hwritefile, PR_HASHTABLE exclude_lis
 							BOOLEAN is_whitelisted = FALSE;
 
 							// remember entries to prevent duplicates
-							_r_obj_addhashtableitem2 (exclude_list, host_hash, NULL);
+							_r_obj_addhashtableitem (exclude_list, host_hash, NULL);
 
 							for (SIZE_T i = 0; i < _r_obj_getlistsize (exclude_list_mask); i++)
 							{
@@ -247,7 +247,7 @@ SIZE_T _app_parsefile (HANDLE hfile, HANDLE hwritefile, PR_HASHTABLE exclude_lis
 							}
 							else
 							{
-								_r_obj_addhashtableitem2 (exclude_list, host_hash, NULL);
+								_r_obj_addhashtableitem (exclude_list, host_hash, NULL);
 							}
 
 							hosts_count += 1;
@@ -448,7 +448,7 @@ VOID _app_startupdate ()
 	exclude_list = _r_obj_createhashtableex (sizeof (void*), 0x1000, NULL);
 
 	for (SIZE_T i = 0; i < RTL_NUMBER_OF (exclude_hosts); i++)
-		_r_obj_addhashtableitem2 (exclude_list, _r_str_hash (exclude_hosts[i], _r_str_length (exclude_hosts[i])), NULL);
+		_r_obj_addhashtableitem (exclude_list, _r_str_hash (exclude_hosts[i], _r_str_length (exclude_hosts[i])), NULL);
 
 	PR_LIST sources_arr = _r_obj_createlistex (0x50, &_r_obj_dereference);
 
