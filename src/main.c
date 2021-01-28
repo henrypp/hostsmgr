@@ -123,14 +123,12 @@ VOID _app_writeunicodeasansi (HANDLE hfile, LPCWSTR text)
 
 SIZE_T _app_parseline (PR_STRING line)
 {
-	SIZE_T length;
 	SIZE_T comment_start_pos;
 	SIZE_T space_pos;
 
 	_r_obj_trimstring (line, L"\r\n\t\\/ ");
 
-	length = _r_obj_getstringlength (line);
-	comment_start_pos = _r_str_findchar (line->buffer, length, L'#');
+	comment_start_pos = _r_str_findchar (line->buffer, L'#');
 
 	if (comment_start_pos == 0)
 		return 0;
@@ -138,24 +136,21 @@ SIZE_T _app_parseline (PR_STRING line)
 	if (comment_start_pos != SIZE_MAX)
 		_r_obj_setstringsize (line, comment_start_pos * sizeof (WCHAR));
 
-	_r_str_replacechar (line->buffer, _r_obj_getstringlength (line), L'\t', L' ');
+	_r_str_replacechar (line->buffer, L'\t', L' ');
 	_r_obj_trimstring (line, L"\r\n\\/ ");
 
 	if (_r_obj_isstringempty (line))
 		return 0;
 
-	length = _r_obj_getstringlength (line);
-	space_pos = _r_str_findchar (line->buffer, length, L' ');
+	space_pos = _r_str_findchar (line->buffer, L' ');
 
 	if (space_pos != SIZE_MAX)
 	{
 		_r_obj_removestring (line, 0, space_pos + 1);
 		_r_obj_trimstring (line, L"\r\n\\/ ");
 
-		length = _r_obj_getstringlength (line);
-
 		// check for spaces
-		if (_r_str_findchar (line->buffer, length, L' ') != SIZE_MAX)
+		if (_r_str_findchar (line->buffer, L' ') != SIZE_MAX)
 			return 0;
 	}
 	else
@@ -241,7 +236,7 @@ SIZE_T _app_parsefile (HANDLE hfile, HANDLE hwritefile, PR_HASHTABLE exclude_lis
 						else
 						{
 							// remember entries to prevent duplicates
-							if (_r_str_findchar (host_string->buffer, _r_obj_getstringlength (host_string), L'*') != SIZE_MAX)
+							if (_r_str_findchar (host_string->buffer, L'*') != SIZE_MAX)
 							{
 								_r_obj_addlistitem (exclude_list_mask, _r_obj_reference (host_string)); // mask
 							}
@@ -300,7 +295,7 @@ VOID _app_parsesource (HINTERNET hsession, HANDLE hosts_file, LPCWSTR source, PR
 	}
 	else
 	{
-		source_hash = _r_str_hash (source, _r_str_length (source));
+		source_hash = _r_str_hash (source);
 
 		WCHAR path[MAX_PATH];
 
@@ -448,7 +443,7 @@ VOID _app_startupdate ()
 	exclude_list = _r_obj_createhashtableex (sizeof (void*), 0x1000, NULL);
 
 	for (SIZE_T i = 0; i < RTL_NUMBER_OF (exclude_hosts); i++)
-		_r_obj_addhashtableitem (exclude_list, _r_str_hash (exclude_hosts[i], _r_str_length (exclude_hosts[i])), NULL);
+		_r_obj_addhashtableitem (exclude_list, _r_str_hash (exclude_hosts[i]), NULL);
 
 	PR_LIST sources_arr = _r_obj_createlistex (0x50, &_r_obj_dereference);
 
@@ -484,7 +479,7 @@ VOID _app_startupdate ()
 
 					if (url_string)
 					{
-						SIZE_T pos = _r_str_findchar (url_string->buffer, _r_obj_getstringlength (url_string), L'#');
+						SIZE_T pos = _r_str_findchar (url_string->buffer, L'#');
 
 						if (pos != SIZE_MAX)
 						{
