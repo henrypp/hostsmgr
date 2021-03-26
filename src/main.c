@@ -87,12 +87,12 @@ VOID _app_printdata (FACILITY fac, ULONG code, LPCWSTR description, LPCWSTR form
 hostsmgr -ip 127.0.0.1 -os win -path [out file]\r\n\
 \r\n\
 Command line:\r\n\
--ip         ip address to be set as resolver (def. 0.0.0.0)\r\n\
--os         new line format; \"win\", \"linux\" & \"mac\" (def. \"win\")\r\n\
 -path       output file location (def. \".\\hosts\")\r\n\
+-ip         ip address to be set as resolver (def. 0.0.0.0)\r\n\
+-os         new line format; \"win\", \"linux\" or \"mac\" (def. \"win\")\r\n\
 -nobackup   do not create backup for output file (opt.)\r\n\
--noresolve  do not set resolver, just generate ip list (opt.)\r\n\
--nocache    do not use cache files, load from inet (opt.)\r\n\
+-noresolve  do not set resolver, just generate hosts list (opt.)\r\n\
+-nocache    do not use cache files, load directly from internet (opt.)\r\n\
 \r\n");
 
 			break;
