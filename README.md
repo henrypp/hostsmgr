@@ -11,7 +11,7 @@
 -------
 
 <p align="center">
-	<img src="https://www.henrypp.org/images/hostsmgr.png??fi" />
+	<img src="https://www.henrypp.org/images/hostsmgr.png??fixcache" />
 </p>
 
 ### Description:
