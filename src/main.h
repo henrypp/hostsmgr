@@ -8,7 +8,7 @@
 #include "resource.h"
 #include "app.h"
 
-typedef struct _STATIC_DATA
+typedef struct tagSTATIC_DATA
 {
 	WCHAR eol[3];
 
@@ -21,7 +21,32 @@ typedef struct _STATIC_DATA
 	PR_STRING hosts_file_temp;
 	PR_STRING hosts_file_backup;
 
+	HANDLE hevent_stop_thread;
+
+	LONG processor_count;
+	volatile LONG threads_count;
+
 	BOOLEAN is_nobackup;
 	BOOLEAN is_noresolver;
 	BOOLEAN is_nocache;
 } STATIC_DATA, *PSTATIC_DATA;
+
+typedef struct tagSOURCE_INFO_DATA
+{
+	PR_STRING source;
+	HINTERNET hsession;
+	HANDLE hfile;
+
+	SIZE_T source_hash;
+
+	volatile PLONG64 total_size;
+	volatile PLONG total_hosts;
+	volatile PLONG total_sources;
+} SOURCE_INFO_DATA, *PSOURCE_INFO_DATA;
+
+typedef enum tagFACILITY_CODE
+{
+	Success,
+	Failure,
+	Help,
+} FACILITY_CODE;
