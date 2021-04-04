@@ -25,6 +25,9 @@ typedef struct tagSTATIC_DATA
 
 	LONG processor_count;
 	volatile LONG threads_count;
+	volatile LONG64 total_size;
+	volatile LONG total_hosts;
+	volatile LONG total_sources;
 
 	BOOLEAN is_nobackup;
 	BOOLEAN is_noresolver;
@@ -38,10 +41,6 @@ typedef struct tagSOURCE_INFO_DATA
 	HANDLE hfile;
 
 	SIZE_T source_hash;
-
-	volatile PLONG64 total_size;
-	volatile PLONG total_hosts;
-	volatile PLONG total_sources;
 } SOURCE_INFO_DATA, *PSOURCE_INFO_DATA;
 
 typedef enum tagFACILITY_CODE
