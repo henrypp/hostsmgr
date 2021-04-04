@@ -1,12 +1,6 @@
 https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt
 https://s3.amazonaws.com/lists.disconnect.me/simple_malvertising.txt
-https://s3.amazonaws.com/lists.disconnect.me/simple_malware.txt
-https://mirror.cedia.org.ec/malwaredomains/immortal_domains.txt
-https://mirror.cedia.org.ec/malwaredomains/justdomains
 https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=1&mimetype=plaintext
-https://www.malwaredomainlist.com/hostslist/hosts.txt
-https://mirror1.malwaredomains.com/files/justdomains
-https://hosts-file.net/ad_servers.txt
 https://someonewhocares.org/hosts/zero/hosts
 http://winhelp2002.mvps.org/hosts.txt
 http://sysctl.org/cameleon/hosts
@@ -15,3 +9,4 @@ https://raw.githubusercontent.com/greatis/Anti-WebMiner/master/hosts
 https://hostsfile.mine.nu/Hosts
 https://raw.githubusercontent.com/jerryn70/GoodbyeAds/master/Hosts/GoodbyeAds.txt
 https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt
+http://malwaredomains.lehigh.edu/files/immortal_domains.txt
