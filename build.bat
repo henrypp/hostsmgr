@@ -1,4 +1,6 @@
 @echo off
 
 cd ..\builder
-build "" hostsmgr 2.1
+call build hostsmgr 2.1
+
+pause
