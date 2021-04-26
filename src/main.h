@@ -45,7 +45,7 @@ typedef struct tagSOURCE_INFO_DATA
 
 typedef enum tagFACILITY_CODE
 {
-	Success,
-	Failure,
-	Help,
+	FACILITY_SUCCESS,
+	FACILITY_FAILURE,
+	FACILITY_HELP,
 } FACILITY_CODE;
