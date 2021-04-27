@@ -19,22 +19,6 @@ R_SPINLOCK parsing_lock;
 PR_HASHTABLE exclude_list = NULL;
 PR_LIST exclude_list_mask = NULL;
 
-FORCEINLINE LONG64 PerformanceCounter ()
-{
-	LARGE_INTEGER li = {0};
-	QueryPerformanceCounter (&li);
-
-	return li.QuadPart;
-}
-
-FORCEINLINE LONG64 PerformanceFrequency ()
-{
-	LARGE_INTEGER li = {0};
-	QueryPerformanceFrequency (&li);
-
-	return li.QuadPart;
-}
-
 VOID _app_printconsole (LPCWSTR format, ...)
 {
 	va_list arg_ptr;
@@ -692,7 +676,7 @@ VOID _app_startupdate ()
 	if (!config.is_nocache && !_r_obj_isstringempty (config.cache_dir))
 		_r_fs_mkdir (config.cache_dir->buffer);
 
-	LONG64 start_time = PerformanceCounter ();
+	LONG64 start_time = _r_sys_initializeexecutiontime ();
 
 	HINTERNET hsession = _r_inet_createsession (_r_app_getuseragent ());
 
@@ -750,7 +734,7 @@ VOID _app_startupdate ()
 		_r_format_number (hosts_format, RTL_NUMBER_OF (hosts_format), config.total_hosts);
 		_r_format_bytesize64 (size_format, RTL_NUMBER_OF (size_format), config.total_size);
 
-		_app_printconsole (L"\r\nFinished %" TEXT (PR_LONG) L" sources with %s hosts and %s in %.03f seconds...\r\n", config.total_sources, hosts_format, size_format, ((PerformanceCounter () - start_time) * 1000.0) / PerformanceFrequency () / 1000.0);
+		_app_printconsole (L"\r\nFinished %" TEXT (PR_LONG) L" sources with %s hosts and %s in %.03f seconds...\r\n", config.total_sources, hosts_format, size_format, _r_sys_finalexecutiontime (start_time));
 
 		_r_inet_close (hsession);
 	}
