@@ -133,7 +133,7 @@ SIZE_T _app_parseline (_Inout_ PR_STRING line)
 
 	_r_obj_trimstring (line, L"\r\n\t\\/ ");
 
-	comment_start_pos = _r_str_findchar (line->buffer, L'#');
+	comment_start_pos = _r_str_findchar (line->buffer, _r_obj_getstringlength (line), L'#');
 
 	if (comment_start_pos == 0)
 		return 0;
@@ -147,7 +147,7 @@ SIZE_T _app_parseline (_Inout_ PR_STRING line)
 	if (_r_obj_isstringempty (line))
 		return 0;
 
-	space_pos = _r_str_findchar (line->buffer, L' ');
+	space_pos = _r_str_findchar (line->buffer, _r_obj_getstringlength (line), L' ');
 
 	if (space_pos != SIZE_MAX)
 	{
@@ -155,7 +155,7 @@ SIZE_T _app_parseline (_Inout_ PR_STRING line)
 		_r_obj_trimstring (line, L"\r\n\\/ ");
 
 		// check for spaces
-		if (_r_str_findchar (line->buffer, L' ') != SIZE_MAX)
+		if (_r_str_findchar (line->buffer, _r_obj_getstringlength (line), L' ') != SIZE_MAX)
 			return 0;
 	}
 	else
@@ -167,7 +167,7 @@ SIZE_T _app_parseline (_Inout_ PR_STRING line)
 		return 0;
 
 	if (!_r_obj_isstringempty (line))
-		return _r_str_hash (line->buffer);
+		return _r_obj_getstringhash (line);
 
 	return 0;
 }
@@ -280,7 +280,7 @@ LONG _app_parsefile (_In_ HANDLE hfile_in, _In_opt_ HANDLE hfile_out)
 					else
 					{
 						// remember entries to prevent duplicates
-						if (_r_str_findchar (host_string->buffer, L'*') != SIZE_MAX)
+						if (_r_str_findchar (host_string->buffer, _r_obj_getstringlength (host_string), L'*') != SIZE_MAX)
 						{
 							_r_spinlock_acquireexclusive (&exclude_lock);
 
@@ -335,7 +335,7 @@ PR_HASHTABLE _app_getsourcestable (_In_ HANDLE hfile)
 
 				if (url_string)
 				{
-					comment_pos = _r_str_findchar (url_string->buffer, L'#');
+					comment_pos = _r_str_findchar (url_string->buffer, _r_obj_getstringlength (url_string), L'#');
 
 					if (comment_pos != SIZE_MAX)
 					{
@@ -343,7 +343,7 @@ PR_HASHTABLE _app_getsourcestable (_In_ HANDLE hfile)
 						_r_obj_trimstring (url_string, L"\r\n\t\\/ ");
 					}
 
-					hash_code = _r_str_hash (url_string->buffer);
+					hash_code = _r_obj_getstringhash (url_string);
 
 					if (hash_code && !_r_obj_findhashtable (result, hash_code))
 					{
