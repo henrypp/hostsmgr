@@ -1,3 +1,16 @@
+v2.1 (6 May 2021)
+- set win7sp1 as minimum required version
+- added multi-core cpu support
+- added "-thread" option argument
+- use hashtable to avoid source duplicates
+- enable eh continuation metadata for builds
+- fixed string token used uninitialized memory
+- fixed header length can be not enough
+- renamed config files
+- updated sources list
+- updated project sdk
+- fixed bugs
+
 v2.0 (26 March 2021)
 - increased parsing speed
 - added "-noresolve" option to create only host address list
