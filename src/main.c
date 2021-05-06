@@ -167,7 +167,7 @@ SIZE_T _app_parseline (_Inout_ PR_STRING line)
 		return 0;
 
 	if (!_r_obj_isstringempty (line))
-		return _r_obj_getstringhash (line);
+		return _r_str_crc32 (line->buffer, TRUE);
 
 	return 0;
 }
@@ -849,9 +849,11 @@ VOID _app_setdefaults ()
 
 INT _cdecl wmain (INT argc, LPCWSTR argv[])
 {
-	_setmode (_fileno (stdin), _O_U16TEXT);
-	_setmode (_fileno (stdout), _O_U16TEXT);
-	_setmode (_fileno (stderr), _O_U16TEXT);
+	INT mode;
+
+	mode = _setmode (_fileno (stdin), _O_U16TEXT);
+	mode = _setmode (_fileno (stdout), _O_U16TEXT);
+	mode = _setmode (_fileno (stderr), _O_U16TEXT);
 
 	RtlSecureZeroMemory (&config, sizeof (config));
 
