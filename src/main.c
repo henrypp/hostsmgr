@@ -126,7 +126,7 @@ VOID _app_writestringtofile (_In_ HANDLE hfile, _In_ PR_STRING string)
 	}
 }
 
-SIZE_T _app_parseline (_Inout_ PR_STRING line)
+ULONG_PTR _app_parseline (_Inout_ PR_STRING line)
 {
 	SIZE_T comment_start_pos;
 	SIZE_T space_pos;
@@ -172,7 +172,7 @@ SIZE_T _app_parseline (_Inout_ PR_STRING line)
 	return 0;
 }
 
-BOOLEAN _app_ishostfoundsafe (_In_ SIZE_T hash_code, _In_ PR_STRING host_string)
+BOOLEAN _app_ishostfoundsafe (_In_ ULONG_PTR hash_code, _In_ PR_STRING host_string)
 {
 	PR_STRING string;
 	BOOLEAN is_found;
@@ -228,7 +228,7 @@ LONG _app_parsefile (_In_ HANDLE hfile_in, _In_opt_ HANDLE hfile_out)
 	PR_BYTE bytes;
 	PR_STRING buffer;
 	PR_STRING host_string;
-	SIZE_T host_hash;
+	ULONG_PTR host_hash;
 	SIZE_T length;
 	LONG hosts_count;
 
@@ -310,7 +310,7 @@ PR_HASHTABLE _app_getsourcestable (_In_ HANDLE hfile)
 	PR_HASHTABLE result;
 	PR_STRING url_string;
 	PR_BYTE bytes;
-	SIZE_T hash_code;
+	ULONG_PTR hash_code;
 	SIZE_T comment_pos;
 	SIZE_T length;
 
@@ -424,14 +424,14 @@ THREAD_API _app_downloadandparsethread (PVOID lparam)
 		{
 			PR_STRING temp_path = _r_str_expandenvironmentstring (L"%temp%");
 
-			_r_str_printf (path, RTL_NUMBER_OF (path), L"%s\\%" TEXT (PR_SIZE_T) L".txt", _r_obj_getstringorempty (temp_path), si_data->source_hash);
+			_r_str_printf (path, RTL_NUMBER_OF (path), L"%s\\%" TEXT (PR_ULONG_PTR) L".txt", _r_obj_getstringorempty (temp_path), si_data->source_hash);
 
 			if (temp_path)
 				_r_obj_dereference (temp_path);
 		}
 		else
 		{
-			_r_str_printf (path, RTL_NUMBER_OF (path), L"%s\\%" TEXT (PR_SIZE_T) L".txt", _r_obj_getstringorempty (config.cache_dir), si_data->source_hash);
+			_r_str_printf (path, RTL_NUMBER_OF (path), L"%s\\%" TEXT (PR_ULONG_PTR) L".txt", _r_obj_getstringorempty (config.cache_dir), si_data->source_hash);
 		}
 
 		SetFileAttributes (path, FILE_ATTRIBUTE_NORMAL);

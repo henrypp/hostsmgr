@@ -40,7 +40,7 @@ typedef struct tagSOURCE_INFO_DATA
 	HINTERNET hsession;
 	HANDLE hfile;
 
-	SIZE_T source_hash;
+	ULONG_PTR source_hash;
 } SOURCE_INFO_DATA, *PSOURCE_INFO_DATA;
 
 typedef enum tagFACILITY_CODE
