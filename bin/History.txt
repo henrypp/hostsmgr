@@ -1,3 +1,7 @@
+v2.1.1 (8 June 2021)
+- fixed excluded hosts hashing
+- updated project sdk
+
 v2.1 (6 May 2021)
 - set win7sp1 as minimum required version
 - added multi-core cpu support
