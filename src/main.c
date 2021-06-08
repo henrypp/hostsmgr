@@ -229,13 +229,9 @@ LONG _app_parsefile (_In_ HANDLE hfile_in, _In_opt_ HANDLE hfile_out)
 	PR_STRING buffer;
 	PR_STRING host_string;
 	ULONG_PTR host_hash;
-	SIZE_T length;
 	LONG hosts_count;
 
-	if (!(length = (SIZE_T)_r_fs_getsize (hfile_in)))
-		return 0;
-
-	bytes = _r_fs_readfile (hfile_in, (ULONG)length);
+	bytes = _r_fs_readfile (hfile_in);
 
 	if (!bytes)
 		return 0;
@@ -312,60 +308,54 @@ PR_HASHTABLE _app_getsourcestable (_In_ HANDLE hfile)
 	PR_BYTE bytes;
 	ULONG_PTR hash_code;
 	SIZE_T comment_pos;
-	SIZE_T length;
+
+	bytes = _r_fs_readfile (hfile);
+
+	if (!bytes)
+		return NULL;
 
 	result = _r_obj_createhashtableex (sizeof (SOURCE_INFO_DATA), 64, NULL);
 
-	length = (SIZE_T)_r_fs_getsize (hfile);
+	LPSTR tok_buffer = NULL;
+	LPSTR token = strtok_s (bytes->buffer, "\r\n", &tok_buffer);
 
-	if (length)
+	while (token)
 	{
-		bytes = _r_fs_readfile (hfile, (ULONG)length);
+		_r_str_trim_a (token, "\r\n\t\\/ ");
 
-		if (bytes)
+		url_string = _r_str_multibyte2unicode (token);
+
+		if (url_string)
 		{
-			LPSTR tok_buffer = NULL;
-			LPSTR token = strtok_s (bytes->buffer, "\r\n", &tok_buffer);
+			comment_pos = _r_str_findchar (url_string->buffer, _r_obj_getstringlength (url_string), L'#');
 
-			while (token)
+			if (comment_pos != SIZE_MAX)
 			{
-				_r_str_trim_a (token, "\r\n\t\\/ ");
-
-				url_string = _r_str_multibyte2unicode (token);
-
-				if (url_string)
-				{
-					comment_pos = _r_str_findchar (url_string->buffer, _r_obj_getstringlength (url_string), L'#');
-
-					if (comment_pos != SIZE_MAX)
-					{
-						_r_obj_setstringsize (url_string, comment_pos * sizeof (WCHAR));
-						_r_obj_trimstring (url_string, L"\r\n\t\\/ ");
-					}
-
-					hash_code = _r_str_fnv32a (url_string->buffer, TRUE);
-
-					if (hash_code && !_r_obj_findhashtable (result, hash_code))
-					{
-						SOURCE_INFO_DATA si_data = {0};
-
-						si_data.source = url_string;
-						si_data.source_hash = hash_code;
-
-						_r_obj_addhashtableitem (result, hash_code, &si_data);
-					}
-					else
-					{
-						_r_obj_dereference (url_string);
-					}
-				}
-
-				token = strtok_s (NULL, "\r\n", &tok_buffer);
+				_r_obj_setstringsize (url_string, comment_pos * sizeof (WCHAR));
+				_r_obj_trimstring (url_string, L"\r\n\t\\/ ");
 			}
 
-			_r_obj_dereference (bytes);
+			hash_code = _r_str_fnv32a (url_string->buffer, TRUE);
+
+			if (hash_code && !_r_obj_findhashtable (result, hash_code))
+			{
+				SOURCE_INFO_DATA si_data = {0};
+
+				si_data.source = url_string;
+				si_data.source_hash = hash_code;
+
+				_r_obj_addhashtableitem (result, hash_code, &si_data);
+			}
+			else
+			{
+				_r_obj_dereference (url_string);
+			}
 		}
+
+		token = strtok_s (NULL, "\r\n", &tok_buffer);
 	}
+
+	_r_obj_dereference (bytes);
 
 	if (!result->count)
 	{
