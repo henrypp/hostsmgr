@@ -343,7 +343,7 @@ PR_HASHTABLE _app_getsourcestable (_In_ HANDLE hfile)
 						_r_obj_trimstring (url_string, L"\r\n\t\\/ ");
 					}
 
-					hash_code = _r_obj_getstringhash (url_string);
+					hash_code = _r_str_fnv32a (url_string->buffer, TRUE);
 
 					if (hash_code && !_r_obj_findhashtable (result, hash_code))
 					{
@@ -620,7 +620,7 @@ VOID _app_startupdate ()
 	}
 
 	for (SIZE_T i = 0; i < RTL_NUMBER_OF (exclude_hosts); i++)
-		_r_obj_addhashtableitem (exclude_list, _r_str_hash (exclude_hosts[i]), NULL);
+		_r_obj_addhashtableitem (exclude_list, _r_str_crc32 (exclude_hosts[i], TRUE), NULL);
 
 	// parse whitelist
 	{
