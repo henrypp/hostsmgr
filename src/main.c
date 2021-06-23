@@ -280,7 +280,7 @@ LONG _app_parsefile (_In_ HANDLE hfile_in, _In_opt_ HANDLE hfile_out)
 						{
 							_r_spinlock_acquireexclusive (&exclude_lock);
 
-							_r_obj_addlistitem (exclude_list_mask, _r_obj_reference (host_string)); // mask
+							_r_obj_addlistitem (exclude_list_mask, _r_obj_reference (host_string), NULL); // mask
 
 							_r_spinlock_releaseexclusive (&exclude_lock);
 						}
