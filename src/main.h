@@ -21,10 +21,6 @@ typedef struct tagSTATIC_DATA
 	PR_STRING hosts_file_temp;
 	PR_STRING hosts_file_backup;
 
-	HANDLE hevent_stop_thread;
-
-	LONG processor_count;
-	volatile LONG threads_count;
 	volatile LONG64 total_size;
 	volatile LONG total_hosts;
 	volatile LONG total_sources;
