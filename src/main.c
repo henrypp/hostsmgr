@@ -168,7 +168,7 @@ ULONG_PTR _app_parseline (_Inout_ PR_STRING line)
 	if (line->buffer[0] == UNICODE_NULL || line->buffer[0] == L'#' || line->buffer[0] == L'<' || line->buffer[0] == L'.')
 		return 0;
 
-	return _r_str_crc32 (&line->sr, TRUE);
+	return _r_obj_getstringrefhash (&line->sr);
 }
 
 BOOLEAN _app_ishostfoundsafe (_In_ ULONG_PTR hash_code, _In_ PR_STRING host_string)
@@ -339,7 +339,7 @@ PR_HASHTABLE _app_getsourcestable (_In_ HANDLE hfile)
 				_r_str_trimstring2 (url_string, L"\r\n\t\\/ ", 0);
 			}
 
-			hash_code = _r_str_fnv32a (&url_string->sr, TRUE);
+			hash_code = _r_obj_getstringrefhash (&url_string->sr);
 
 			if (hash_code && !_r_obj_findhashtable (result, hash_code))
 			{
@@ -601,7 +601,7 @@ VOID _app_startupdate ()
 
 	for (SIZE_T i = 0; i < RTL_NUMBER_OF (exclude_hosts); i++)
 	{
-		_r_obj_addhashtableitem (exclude_list, _r_str_crc32 (&exclude_hosts[i], TRUE), NULL);
+		_r_obj_addhashtableitem (exclude_list, _r_obj_getstringrefhash (&exclude_hosts[i]), NULL);
 	}
 
 	// parse whitelist
