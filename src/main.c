@@ -168,7 +168,7 @@ ULONG_PTR _app_parseline (_Inout_ PR_STRING line)
 	if (line->buffer[0] == UNICODE_NULL || line->buffer[0] == L'#' || line->buffer[0] == L'<' || line->buffer[0] == L'.')
 		return 0;
 
-	return _r_obj_getstringrefhash (&line->sr);
+	return _r_obj_getstringrefhash (&line->sr, TRUE);
 }
 
 BOOLEAN _app_ishostfoundsafe (_In_ ULONG_PTR hash_code, _In_ PR_STRING host_string)
@@ -339,7 +339,7 @@ PR_HASHTABLE _app_getsourcestable (_In_ HANDLE hfile)
 				_r_str_trimstring2 (url_string, L"\r\n\t\\/ ", 0);
 			}
 
-			hash_code = _r_obj_getstringrefhash (&url_string->sr);
+			hash_code = _r_obj_getstringrefhash (&url_string->sr, TRUE);
 
 			if (hash_code && !_r_obj_findhashtable (result, hash_code))
 			{
@@ -412,7 +412,7 @@ VOID NTAPI _app_downloadandparsethread (_In_ PVOID arglist, _In_ ULONG busy_coun
 	{
 		if (config.is_nocache)
 		{
-			_r_str_printf (path, RTL_NUMBER_OF (path), L"%s\\%" TEXT (PR_ULONG_PTR) L".txt", _r_sys_gettempdirectory (), si_data->source_hash);
+			_r_str_printf (path, RTL_NUMBER_OF (path), L"%s\\%" TEXT (PR_ULONG_PTR) L".txt", _r_sys_gettempdirectory ()->buffer, si_data->source_hash);
 		}
 		else
 		{
@@ -601,7 +601,7 @@ VOID _app_startupdate ()
 
 	for (SIZE_T i = 0; i < RTL_NUMBER_OF (exclude_hosts); i++)
 	{
-		_r_obj_addhashtableitem (exclude_list, _r_obj_getstringrefhash (&exclude_hosts[i]), NULL);
+		_r_obj_addhashtableitem (exclude_list, _r_obj_getstringrefhash (&exclude_hosts[i], TRUE), NULL);
 	}
 
 	// parse whitelist
@@ -800,10 +800,10 @@ VOID _app_setdefaults ()
 	if (_r_obj_isstringempty (config.hosts_destination))
 		config.is_noresolver = TRUE;
 
-	_r_obj_movereference (&config.sources_file, _r_obj_concatstrings (2, _r_app_getdirectory (), L"\\hosts_sources.dat"));
-	_r_obj_movereference (&config.userlist_file, _r_obj_concatstrings (2, _r_app_getdirectory (), L"\\hosts_userlist.dat"));
-	_r_obj_movereference (&config.whitelist_file, _r_obj_concatstrings (2, _r_app_getdirectory (), L"\\hosts_whitelist.dat"));
-	_r_obj_movereference (&config.cache_dir, _r_obj_concatstrings (2, _r_app_getprofiledirectory (), L"\\cache"));
+	_r_obj_movereference (&config.sources_file, _r_obj_concatstrings (2, _r_app_getdirectory ()->buffer, L"\\hosts_sources.dat"));
+	_r_obj_movereference (&config.userlist_file, _r_obj_concatstrings (2, _r_app_getdirectory ()->buffer, L"\\hosts_userlist.dat"));
+	_r_obj_movereference (&config.whitelist_file, _r_obj_concatstrings (2, _r_app_getdirectory ()->buffer, L"\\hosts_whitelist.dat"));
+	_r_obj_movereference (&config.cache_dir, _r_obj_concatstrings (2, _r_app_getprofiledirectory ()->buffer, L"\\cache"));
 
 	// set hosts path
 	if (_r_obj_isstringempty (config.hosts_file))
