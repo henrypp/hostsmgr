@@ -26,8 +26,8 @@ typedef struct tagSTATIC_DATA
 	volatile LONG total_sources;
 
 	BOOLEAN is_nobackup;
-	BOOLEAN is_noresolver;
 	BOOLEAN is_nocache;
+	BOOLEAN is_hostonly;
 } STATIC_DATA, *PSTATIC_DATA;
 
 typedef struct tagSOURCE_INFO_DATA

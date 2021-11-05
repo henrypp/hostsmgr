@@ -24,9 +24,12 @@ VOID _app_printconsole (_In_ _Printf_format_string_ LPCWSTR format, ...)
 	PR_STRING string;
 	HANDLE hstdout;
 
+	if (!format)
+		return;
+
 	hstdout = GetStdHandle (STD_OUTPUT_HANDLE);
 
-	if (!format || !_r_fs_isvalidhandle (hstdout))
+	if (!_r_fs_isvalidhandle (hstdout))
 		return;
 
 	va_start (arg_ptr, format);
@@ -45,9 +48,9 @@ VOID _app_printstatus (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ LPC
 	{
 		case FACILITY_SUCCESS:
 		{
-			if (!_r_str_isempty (name))
+			if (name)
 			{
-				if (!_r_str_isempty (description))
+				if (description)
 				{
 					_app_printconsole (L"%s (%s)\r\n", name, description);
 				}
@@ -62,9 +65,9 @@ VOID _app_printstatus (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ LPC
 
 		case FACILITY_FAILURE:
 		{
-			if (!_r_str_isempty (name))
+			if (name)
 			{
-				if (!_r_str_isempty (description))
+				if (description)
 				{
 					if (code)
 					{
@@ -128,17 +131,18 @@ VOID _app_writestringtofile (_In_ HANDLE hfile, _In_ PR_STRING string)
 ULONG_PTR _app_parseline (_Inout_ PR_STRING line)
 {
 	static R_STRINGREF trim_sr = PR_STRINGREF_INIT (L"\r\n\t\\/ ");
-	SIZE_T comment_start_pos;
+	static R_STRINGREF blacklist_sr = PR_STRINGREF_INIT (L"#<>!@$%^&(){}\"':;/");
+	static R_STRINGREF blacklist_first_char_sr = PR_STRINGREF_INIT (L".");
+
+	SIZE_T comment_pos;
 	SIZE_T space_pos;
 
 	_r_str_trimstring (line, &trim_sr, 0);
 
-	comment_start_pos = _r_str_findchar (&line->sr, L'#', FALSE);
+	comment_pos = _r_str_findchar (&line->sr, L'#', FALSE);
 
-	if (comment_start_pos != SIZE_MAX)
-	{
-		_r_obj_setstringlength (line, comment_start_pos * sizeof (WCHAR));
-	}
+	if (comment_pos != SIZE_MAX)
+		_r_obj_setstringlength (line, comment_pos * sizeof (WCHAR));
 
 	_r_str_replacechar (&line->sr, L'\t', L' ');
 	_r_str_trimstring (line, &trim_sr, 0);
@@ -165,8 +169,22 @@ ULONG_PTR _app_parseline (_Inout_ PR_STRING line)
 	if (_r_obj_isstringempty (line))
 		return 0;
 
-	if (line->buffer[0] == UNICODE_NULL || line->buffer[0] == L'#' || line->buffer[0] == L'<' || line->buffer[0] == L'.')
-		return 0;
+	// check first char
+	for (SIZE_T i = 0; i < _r_obj_getstringreflength (&blacklist_first_char_sr); i++)
+	{
+		if (line->buffer[0] == blacklist_first_char_sr.buffer[i])
+			return 0;
+	}
+
+	// check whole line
+	for (SIZE_T i = 0; i < _r_obj_getstringlength (line); i++)
+	{
+		for (SIZE_T j = 0; j < _r_obj_getstringreflength (&blacklist_sr); j++)
+		{
+			if (line->buffer[i] == blacklist_sr.buffer[j])
+				return 0;
+		}
+	}
 
 	return _r_obj_getstringrefhash (&line->sr, TRUE);
 }
@@ -175,9 +193,6 @@ BOOLEAN _app_ishostfoundsafe (_In_ ULONG_PTR hash_code, _In_ PR_STRING host_stri
 {
 	PR_STRING string;
 	BOOLEAN is_found;
-
-	if (!hash_code)
-		return TRUE;
 
 	_r_queuedlock_acquireshared (&exclude_lock);
 
@@ -256,37 +271,40 @@ LONG _app_parsefile (_In_ HANDLE hfile_in, _In_opt_ HANDLE hfile_out)
 			{
 				host_hash = _app_parseline (host_string);
 
-				if (!_app_ishostfoundsafe (host_hash, host_string))
+				if (host_hash)
 				{
-					if (hfile_out)
+					if (!_app_ishostfoundsafe (host_hash, host_string))
 					{
-						if (config.is_noresolver)
+						if (hfile_out)
 						{
-							buffer = _r_obj_concatstrings (2, host_string->buffer, config.eol);
+							if (config.is_hostonly)
+							{
+								buffer = _r_obj_concatstrings (2, host_string->buffer, config.eol);
+							}
+							else
+							{
+								buffer = _r_obj_concatstrings (4, config.hosts_destination->buffer, L" ", host_string->buffer, config.eol);
+							}
+
+							_app_writestringtofile (hfile_out, buffer);
+							_r_obj_dereference (buffer);
+
+							hosts_count += 1;
 						}
 						else
 						{
-							buffer = _r_obj_concatstrings (4, config.hosts_destination->buffer, L" ", host_string->buffer, config.eol);
+							// remember entries to prevent duplicates
+							if (_r_str_findchar (&host_string->sr, L'*', FALSE) != SIZE_MAX)
+							{
+								_r_queuedlock_acquireexclusive (&exclude_lock);
+
+								_r_obj_addlistitem (exclude_list_mask, _r_obj_reference (host_string)); // mask
+
+								_r_queuedlock_releaseexclusive (&exclude_lock);
+							}
+
+							hosts_count += 1;
 						}
-
-						_app_writestringtofile (hfile_out, buffer);
-						_r_obj_dereference (buffer);
-
-						hosts_count += 1;
-					}
-					else
-					{
-						// remember entries to prevent duplicates
-						if (_r_str_findchar (&host_string->sr, L'*', FALSE) != SIZE_MAX)
-						{
-							_r_queuedlock_acquireexclusive (&exclude_lock);
-
-							_r_obj_addlistitem (exclude_list_mask, _r_obj_reference (host_string)); // mask
-
-							_r_queuedlock_releaseexclusive (&exclude_lock);
-						}
-
-						hosts_count += 1;
 					}
 				}
 
@@ -586,13 +604,16 @@ VOID _app_startupdate ()
 			);
 		}
 
-		_r_obj_appendstringbuilderformat (&header,
-										  L"%s127.0.0.1 localhost%s::1 localhost%s%s",
-										  config.eol,
-										  config.eol,
-										  config.eol,
-										  config.eol
-		);
+		if (!config.is_hostonly)
+		{
+			_r_obj_appendstringbuilderformat (&header,
+											  L"%s127.0.0.1 localhost%s::1 localhost%s%s",
+											  config.eol,
+											  config.eol,
+											  config.eol,
+											  config.eol
+			);
+		}
 
 		_app_writestringtofile (hosts_file, header.string);
 
@@ -744,7 +765,7 @@ VOID _app_parsearguments (_In_reads_ (argc) LPCWSTR argv[], _In_ INT argc)
 		}
 		else if (_r_str_isequal2 (&key_name, L"noresolve", TRUE))
 		{
-			config.is_noresolver = TRUE;
+			config.is_hostonly = TRUE;
 		}
 		else if (_r_str_isequal2 (&key_name, L"nocache", TRUE))
 		{
@@ -794,11 +815,11 @@ VOID _app_setdefaults ()
 	exclude_list = _r_obj_createhashtable_ex (sizeof (BOOLEAN), 16, NULL);
 	exclude_list_mask = _r_obj_createlist_ex (16, &_r_obj_dereference);
 
-	if (!config.is_noresolver && _r_obj_isstringempty (config.hosts_destination))
+	if (!config.is_hostonly && _r_obj_isstringempty (config.hosts_destination))
 		_r_obj_movereference (&config.hosts_destination, _r_obj_createstring (L"0.0.0.0"));
 
 	if (_r_obj_isstringempty (config.hosts_destination))
-		config.is_noresolver = TRUE;
+		config.is_hostonly = TRUE;
 
 	_r_obj_movereference (&config.sources_file, _r_obj_concatstrings (2, _r_app_getdirectory ()->buffer, L"\\hosts_sources.dat"));
 	_r_obj_movereference (&config.userlist_file, _r_obj_concatstrings (2, _r_app_getdirectory ()->buffer, L"\\hosts_userlist.dat"));
@@ -845,12 +866,12 @@ INT _cdecl wmain (INT argc, LPCWSTR argv[])
 
 			_app_setdefaults ();
 
-			_app_printconsole (L"Path: %s\r\nSources: %s\r\nUserlist: %s\r\nWhitelist: %s\r\nDestination: %s\r\n\r\n",
+			_app_printconsole (L"Path: %s\r\nSources: %s\r\nUserlist: %s\r\nWhitelist: %s\r\nResolver: %s\r\n\r\n",
 							   _r_obj_getstring (config.hosts_file),
 							   _r_obj_getstring (config.sources_file),
 							   _r_obj_getstring (config.userlist_file),
 							   _r_obj_getstring (config.whitelist_file),
-							   config.is_noresolver ? L"<disabled>" : _r_obj_getstring (config.hosts_destination)
+							   config.is_hostonly ? L"<disabled>" : _r_obj_getstring (config.hosts_destination)
 			);
 
 			_app_startupdate ();
