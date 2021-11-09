@@ -131,7 +131,7 @@ VOID _app_writestringtofile (_In_ HANDLE hfile, _In_ PR_STRING string)
 ULONG_PTR _app_parseline (_Inout_ PR_STRING line)
 {
 	static R_STRINGREF trim_sr = PR_STRINGREF_INIT (L"\r\n\t\\/ ");
-	static R_STRINGREF blacklist_sr = PR_STRINGREF_INIT (L"#<>!@$%^&(){}\"':;/");
+	static R_STRINGREF blacklist_sr = PR_STRINGREF_INIT (L"#<>!@$%^&(){}\"':;/ ");
 	static R_STRINGREF blacklist_first_char_sr = PR_STRINGREF_INIT (L".");
 
 	SIZE_T comment_pos;
@@ -449,7 +449,7 @@ VOID NTAPI _app_downloadandparsethread (_In_ PVOID arglist, _In_ ULONG busy_coun
 			HINTERNET hconnect;
 			HINTERNET hrequest;
 
-			if (_r_inet_openurl (si_data->hsession, si_data->source->buffer, &hconnect, &hrequest, NULL) == ERROR_SUCCESS)
+			if (_r_inet_openurl (si_data->hsession, si_data->source, &hconnect, &hrequest, NULL) == ERROR_SUCCESS)
 			{
 				ULONG status = 0;
 				ULONG size = sizeof (status);
