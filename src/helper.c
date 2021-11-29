@@ -20,13 +20,14 @@ PR_STRING _app_print_getsourcetext (_In_ PSOURCE_INFO_DATA source_data)
 
 	R_URLPARTS url_parts;
 	PR_STRING string;
+	SIZE_T pos;
 	ULONG code;
 
 	string = NULL;
 
 	if (source_data->flags & SI_FLAG_ISFILEPATH)
 	{
-		string = _r_path_compact (source_data->url->buffer, 32); // compact
+		string = _r_path_getbasenamestring (&source_data->url->sr);
 	}
 	else
 	{
@@ -34,8 +35,13 @@ PR_STRING _app_print_getsourcetext (_In_ PSOURCE_INFO_DATA source_data)
 
 		if (code == ERROR_SUCCESS)
 		{
-			_r_obj_movereference (&url_parts.host, _r_path_compact (url_parts.host->buffer, 20)); // compact
-			_r_obj_movereference (&url_parts.path, _r_path_compact (url_parts.path->buffer, 32)); // compact
+			pos = _r_str_findchar (&url_parts.path->sr, L'?', FALSE);
+
+			if (pos != SIZE_MAX)
+				_r_obj_setstringlength (url_parts.path, pos * sizeof (WCHAR));
+
+			_r_obj_movereference (&url_parts.host, _r_path_compact (url_parts.host->buffer, 24)); // compact
+			_r_obj_movereference (&url_parts.path, _r_path_compact (url_parts.path->buffer, 48)); // compact
 
 			_r_str_trimstring (url_parts.path, &sr, 0);
 
