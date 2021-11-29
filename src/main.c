@@ -65,7 +65,7 @@ VOID _app_startupdate ()
 	_r_format_number (hosts_format, RTL_NUMBER_OF (hosts_format), config.total_hosts);
 	_r_format_bytesize64 (size_format, RTL_NUMBER_OF (size_format), config.total_size);
 
-	_r_console_writestringformat (L"\r\nFinished %" TEXT (PR_LONG) L" sources with %s items from %s in %.04f seconds...\r\n", config.total_sources, hosts_format, size_format, _r_sys_finalexecutiontime (start_time));
+	_r_console_writestringformat (L"\r\nFinished %" TEXT (PR_LONG) L" sources with %s items from %s in %.03f seconds...\r\n", config.total_sources, hosts_format, size_format, _r_sys_finalexecutiontime (start_time));
 
 	_app_hosts_destroy ();
 	_app_sources_destroy ();
