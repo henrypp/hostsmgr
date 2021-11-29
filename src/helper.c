@@ -3,7 +3,7 @@
 
 #include "global.h"
 
-FORCEINLINE VOID _app_printresult (_In_ PSOURCE_INFO_DATA source_data, _In_ LONG item_count, _In_ LONG64 start_time)
+FORCEINLINE VOID _app_print_sourceresult (_In_ PSOURCE_INFO_DATA source_data, _In_ LONG item_count, _In_ LONG64 start_time)
 {
 	WCHAR buffer[128];
 	WCHAR numbers[128];
@@ -11,7 +11,169 @@ FORCEINLINE VOID _app_printresult (_In_ PSOURCE_INFO_DATA source_data, _In_ LONG
 	_r_format_number (numbers, RTL_NUMBER_OF (numbers), item_count);
 	_r_str_printf (buffer, RTL_NUMBER_OF (buffer), L"(%s items in %4.03f sec.)", numbers, _r_sys_finalexecutiontime (start_time));
 
-	_app_printstatus (item_count ? FACILITY_SUCCESS : FACILITY_WARNING, 0, source_data, buffer);
+	_app_print_status (item_count ? FACILITY_SUCCESS : FACILITY_WARNING, 0, source_data, buffer);
+}
+
+PR_STRING _app_print_getsourcetext (_In_ PSOURCE_INFO_DATA source_data)
+{
+	static R_STRINGREF sr = PR_STRINGREF_INIT (L"/");
+
+	R_URLPARTS url_parts;
+	PR_STRING string;
+	ULONG code;
+
+	string = NULL;
+
+	if (source_data->flags & SI_FLAG_ISFILEPATH)
+	{
+		string = _r_path_compact (source_data->url->buffer, 32); // compact
+	}
+	else
+	{
+		code = _r_inet_queryurlparts (source_data->url, PR_URLPARTS_HOST | PR_URLPARTS_PATH, &url_parts);
+
+		if (code == ERROR_SUCCESS)
+		{
+			_r_obj_movereference (&url_parts.host, _r_path_compact (url_parts.host->buffer, 20)); // compact
+			_r_obj_movereference (&url_parts.path, _r_path_compact (url_parts.path->buffer, 32)); // compact
+
+			_r_str_trimstring (url_parts.path, &sr, 0);
+
+			string = _r_obj_concatstringrefs (3, &url_parts.host->sr, &sr, &url_parts.path->sr);
+
+			_r_inet_destroyurlparts (&url_parts);
+		}
+	}
+
+	if (!string)
+		string = _r_obj_reference (source_data->url);
+
+	return string;
+}
+
+PR_STRING _app_print_gettext (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PSOURCE_INFO_DATA source_data, _In_opt_ LPCWSTR text)
+{
+	R_STRINGBUILDER sb;
+	PR_STRING string;
+
+	_r_obj_initializestringbuilder (&sb);
+
+	if (source_data)
+	{
+		string = _app_print_getsourcetext (source_data);
+
+		_r_obj_appendstringbuilder (&sb, L" ");
+		_r_obj_appendstringbuilder2 (&sb, string);
+
+		_r_obj_dereference (string);
+	}
+
+	if (text)
+		_r_obj_appendstringbuilderformat (&sb, L" %s", text);
+
+	if (code)
+		_r_obj_appendstringbuilderformat (&sb, L" (error: 0x%08" TEXT (PRIX32) L")", code);
+
+	_r_obj_appendstringbuilder (&sb, L"\r\n");
+
+	string = _r_obj_finalstringbuilder (&sb);
+
+	return string;
+}
+
+VOID _app_print_status (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PSOURCE_INFO_DATA source_data, _In_opt_ LPCWSTR text)
+{
+	PR_STRING string;
+
+	switch (fac)
+	{
+		case FACILITY_INIT:
+		{
+			_app_print_status (FACILITY_TITLE, 0, NULL, L"Configuration");
+
+			_r_queuedlock_acquireexclusive (&console_lock);
+
+			_r_console_writestringformat (L"Path: %s\r\nResolver: %s\r\nCaching: %s\r\nDnscrypt mode: %s\r\n",
+										  _r_obj_getstring (config.hosts_file),
+										  config.is_hostonly ? L"<disabled>" : _r_obj_getstring (config.hosts_destination),
+										  config.is_nocache ? L"<disabled>" : L"<enabled>",
+										  !config.is_dnscrypt ? L"<disabled>" : L"<enabled>"
+			);
+
+			_r_queuedlock_releaseexclusive (&console_lock);
+
+			break;
+		}
+
+		case FACILITY_TITLE:
+		{
+			_r_queuedlock_acquireexclusive (&console_lock);
+
+			_r_console_writestringformat (L"\r\n%s:\r\n", text);
+
+			_r_queuedlock_releaseexclusive (&console_lock);
+
+			break;
+		}
+
+		case FACILITY_SUCCESS:
+		case FACILITY_WARNING:
+		case FACILITY_FAILURE:
+		{
+			_r_queuedlock_acquireexclusive (&console_lock);
+
+			if (fac == FACILITY_SUCCESS)
+			{
+				_r_console_setcolor (FOREGROUND_GREEN);
+				_r_console_writestring (L"[success]");
+			}
+			else if (fac == FACILITY_WARNING)
+			{
+				_r_console_setcolor (FOREGROUND_GREEN | FOREGROUND_RED);
+				_r_console_writestring (L"[warning]");
+			}
+			else if (fac == FACILITY_FAILURE)
+			{
+				_r_console_setcolor (FOREGROUND_RED);
+				_r_console_writestring (L"[failure]");
+			}
+
+			_r_console_setcolor (config.con_attr);
+
+			string = _app_print_gettext (fac, code, source_data, text);
+
+			_r_console_writestring2 (string);
+
+			_r_queuedlock_releaseexclusive (&console_lock);
+
+			_r_obj_dereference (string);
+
+			break;
+		}
+
+		case FACILITY_HELP:
+		{
+			_r_queuedlock_acquireexclusive (&console_lock);
+
+			_app_print_status (FACILITY_TITLE, 0, NULL, L"Usage");
+
+			_r_console_writestring (L"hostsmgr -ip 127.0.0.1 -os win -path \".\\out_file\"\r\n");
+
+			_app_print_status (FACILITY_TITLE, 0, NULL, L"Command line");
+
+			_r_console_writestring (L"-path       output file location (def. \".\\hosts\")\r\n\
+-ip         ip address to be set as resolver (def. 0.0.0.0)\r\n\
+-os         new line format; \"win\", \"linux\" or \"mac\" (def. \"win\")\r\n\
+-nobackup   do not create backup for output file (opt.)\r\n\
+-noresolve  do not set resolver, just generate hosts list (opt.)\r\n\
+-nocache    do not use cache files, load directly from internet (opt.)\r\n\
+\r\n");
+
+			_r_queuedlock_releaseexclusive (&console_lock);
+
+			break;
+		}
+	}
 }
 
 BOOLEAN _app_hosts_initialize ()
@@ -20,7 +182,7 @@ BOOLEAN _app_hosts_initialize ()
 
 	if (!_r_fs_isvalidhandle (config.hfile))
 	{
-		_app_printstatus (FACILITY_FAILURE, GetLastError (), NULL, L"Hosts failed");
+		_app_print_status (FACILITY_FAILURE, GetLastError (), NULL, L"Hosts failed");
 		return FALSE;
 	}
 
@@ -371,7 +533,7 @@ VOID NTAPI _app_sources_parsethread (_In_ PVOID arglist, _In_ ULONG busy_count)
 
 		if (!_r_fs_isvalidhandle (source_data->hfile))
 		{
-			_app_printstatus (FACILITY_FAILURE, GetLastError (), source_data, NULL);
+			_app_print_status (FACILITY_FAILURE, GetLastError (), source_data, NULL);
 			return;
 		}
 	}
@@ -396,7 +558,7 @@ VOID NTAPI _app_sources_parsethread (_In_ PVOID arglist, _In_ ULONG busy_count)
 
 		if (!_r_fs_isvalidhandle (source_data->hfile))
 		{
-			_app_printstatus (FACILITY_FAILURE, GetLastError (), source_data, NULL);
+			_app_print_status (FACILITY_FAILURE, GetLastError (), source_data, NULL);
 			_r_obj_dereference (path);
 
 			return;
@@ -408,7 +570,7 @@ VOID NTAPI _app_sources_parsethread (_In_ PVOID arglist, _In_ ULONG busy_count)
 
 			if (status != ERROR_SUCCESS)
 			{
-				_app_printstatus (FACILITY_FAILURE, status, source_data, NULL);
+				_app_print_status (FACILITY_FAILURE, status, source_data, NULL);
 			}
 			else
 			{
@@ -471,7 +633,7 @@ VOID _app_source_processfile (_Inout_ PSOURCE_INFO_DATA source_data, _In_ LONG64
 		InterlockedAdd64 (&config.total_size, _r_fs_getsize (source_data->hfile));
 	}
 
-	_app_printresult (source_data, item_count, start_time);
+	_app_print_sourceresult (source_data, item_count, start_time);
 }
 
 VOID _app_sources_destroy ()

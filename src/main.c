@@ -3,168 +3,6 @@
 
 #include "global.h"
 
-PR_STRING _app_source2text (_In_ PSOURCE_INFO_DATA source_data)
-{
-	static R_STRINGREF sr = PR_STRINGREF_INIT (L"/");
-
-	R_URLPARTS url_parts;
-	PR_STRING string;
-	ULONG code;
-
-	string = NULL;
-
-	if (source_data->flags & SI_FLAG_ISFILEPATH)
-	{
-		string = _r_path_compact (source_data->url->buffer, 32); // compact
-	}
-	else
-	{
-		code = _r_inet_queryurlparts (source_data->url, PR_URLPARTS_HOST | PR_URLPARTS_PATH, &url_parts);
-
-		if (code == ERROR_SUCCESS)
-		{
-			_r_obj_movereference (&url_parts.host, _r_path_compact (url_parts.host->buffer, 20)); // compact
-			_r_obj_movereference (&url_parts.path, _r_path_compact (url_parts.path->buffer, 32)); // compact
-
-			_r_str_trimstring (url_parts.path, &sr, 0);
-
-			string = _r_obj_concatstringrefs (3, &url_parts.host->sr, &sr, &url_parts.path->sr);
-
-			_r_inet_destroyurlparts (&url_parts);
-		}
-	}
-
-	if (!string)
-		string = _r_obj_reference (source_data->url);
-
-	return string;
-}
-
-PR_STRING _app_status2text (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PSOURCE_INFO_DATA source_data, _In_opt_ LPCWSTR text)
-{
-	R_STRINGBUILDER sb;
-	PR_STRING string;
-
-	_r_obj_initializestringbuilder (&sb);
-
-	if (source_data)
-	{
-		string = _app_source2text (source_data);
-
-		_r_obj_appendstringbuilder (&sb, L" ");
-		_r_obj_appendstringbuilder2 (&sb, string);
-
-		_r_obj_dereference (string);
-	}
-
-	if (text)
-		_r_obj_appendstringbuilderformat (&sb, L" %s", text);
-
-	if (code)
-		_r_obj_appendstringbuilderformat (&sb, L" (error: 0x%08" TEXT (PRIX32) L")", code);
-
-	_r_obj_appendstringbuilder (&sb, L"\r\n");
-
-	string = _r_obj_finalstringbuilder (&sb);
-
-	return string;
-}
-
-VOID _app_printstatus (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PSOURCE_INFO_DATA source_data, _In_opt_ LPCWSTR text)
-{
-	PR_STRING string;
-
-	switch (fac)
-	{
-		case FACILITY_INIT:
-		{
-			_app_printstatus (FACILITY_TITLE, 0, NULL, L"Configuration");
-
-			_r_queuedlock_acquireexclusive (&console_lock);
-
-			_r_console_writestringformat (L"Path: %s\r\nResolver: %s\r\nCaching: %s\r\nDnscrypt mode: %s\r\n",
-										  _r_obj_getstring (config.hosts_file),
-										  config.is_hostonly ? L"<disabled>" : _r_obj_getstring (config.hosts_destination),
-										  config.is_nocache ? L"<disabled>" : L"<enabled>",
-										  !config.is_dnscrypt ? L"<disabled>" : L"<enabled>"
-			);
-
-			_r_queuedlock_releaseexclusive (&console_lock);
-
-			break;
-		}
-
-		case FACILITY_TITLE:
-		{
-			_r_queuedlock_acquireexclusive (&console_lock);
-
-			_r_console_writestringformat (L"\r\n%s:\r\n", text);
-
-			_r_queuedlock_releaseexclusive (&console_lock);
-
-			break;
-		}
-
-		case FACILITY_SUCCESS:
-		case FACILITY_WARNING:
-		case FACILITY_FAILURE:
-		{
-			_r_queuedlock_acquireexclusive (&console_lock);
-
-			if (fac == FACILITY_SUCCESS)
-			{
-				_r_console_setcolor (FOREGROUND_GREEN);
-				_r_console_writestring (L"[success]");
-			}
-			else if (fac == FACILITY_WARNING)
-			{
-				_r_console_setcolor (FOREGROUND_GREEN | FOREGROUND_RED);
-				_r_console_writestring (L"[warning]");
-			}
-			else if (fac == FACILITY_FAILURE)
-			{
-				_r_console_setcolor (FOREGROUND_RED);
-				_r_console_writestring (L"[failure]");
-			}
-
-			_r_console_setcolor (config.con_attr);
-
-			string = _app_status2text (fac, code, source_data, text);
-
-			_r_console_writestring2 (string);
-
-			_r_queuedlock_releaseexclusive (&console_lock);
-
-			_r_obj_dereference (string);
-
-			break;
-		}
-
-		case FACILITY_HELP:
-		{
-			_r_queuedlock_acquireexclusive (&console_lock);
-
-			_app_printstatus (FACILITY_TITLE, 0, NULL, L"Usage");
-
-			_r_console_writestring (L"hostsmgr -ip 127.0.0.1 -os win -path \".\\out_file\"\r\n");
-
-			_app_printstatus (FACILITY_TITLE, 0, NULL, L"Command line");
-
-			_r_console_writestring (L"-path       output file location (def. \".\\hosts\")\r\n\
--ip         ip address to be set as resolver (def. 0.0.0.0)\r\n\
--os         new line format; \"win\", \"linux\" or \"mac\" (def. \"win\")\r\n\
--nobackup   do not create backup for output file (opt.)\r\n\
--noresolve  do not set resolver, just generate hosts list (opt.)\r\n\
--nocache    do not use cache files, load directly from internet (opt.)\r\n\
-\r\n");
-
-			_r_queuedlock_releaseexclusive (&console_lock);
-
-			break;
-		}
-	}
-}
-
 VOID _app_startupdate ()
 {
 	WCHAR hosts_format[128];
@@ -180,9 +18,9 @@ VOID _app_startupdate ()
 	config.hsession = _r_inet_createsession (_r_app_getuseragent ());
 
 	if (!config.hsession)
-		_app_printstatus (FACILITY_WARNING, GetLastError (), NULL, L"Inet failure");
+		_app_print_status (FACILITY_WARNING, GetLastError (), NULL, L"Inet failure");
 
-	_app_printstatus (FACILITY_TITLE, 0, NULL, L"Reading configuration");
+	_app_print_status (FACILITY_TITLE, 0, NULL, L"Reading configuration");
 
 	// initialize whitelist
 	_app_whitelist_initialize ();
@@ -205,13 +43,13 @@ VOID _app_startupdate ()
 
 	if (config.is_dnscrypt)
 	{
-		_app_printstatus (FACILITY_TITLE, 0, NULL, L"Calculate dnscrypt whitelist");
+		_app_print_status (FACILITY_TITLE, 0, NULL, L"Calculate dnscrypt whitelist");
 
 		_app_sources_parse (SI_PROCESS_PREPARE_DNSCRYPT);
 	}
 
 	// process sources
-	_app_printstatus (FACILITY_TITLE, 0, NULL, L"Reading sources");
+	_app_print_status (FACILITY_TITLE, 0, NULL, L"Reading sources");
 
 	_app_sources_parse (SI_PROCESS_START);
 
@@ -321,7 +159,7 @@ VOID _app_parsearguments (_In_reads_ (argc) LPCWSTR argv[], _In_ INT argc)
 		}
 		else if (_r_str_isstartswith2 (&key_name, L"help", TRUE))
 		{
-			_app_printstatus (FACILITY_HELP, 0, NULL, NULL);
+			_app_print_status (FACILITY_HELP, 0, NULL, NULL);
 			return;
 		}
 	}
@@ -376,7 +214,7 @@ INT _cdecl wmain (_In_ INT argc, _In_reads_ (argc) LPCWSTR argv[])
 
 	if (argc <= 1)
 	{
-		_app_printstatus (FACILITY_HELP, 0, NULL, NULL);
+		_app_print_status (FACILITY_HELP, 0, NULL, NULL);
 		return ERROR_SUCCESS;
 	}
 
@@ -384,7 +222,7 @@ INT _cdecl wmain (_In_ INT argc, _In_reads_ (argc) LPCWSTR argv[])
 
 	_app_setdefaults ();
 
-	_app_printstatus (FACILITY_INIT, 0, NULL, NULL);
+	_app_print_status (FACILITY_INIT, 0, NULL, NULL);
 
 	_app_startupdate ();
 

@@ -3,6 +3,43 @@
 
 #pragma once
 
+typedef enum _FACILITY_CODE
+{
+	FACILITY_INIT = 1,
+	FACILITY_TITLE,
+	FACILITY_SUCCESS,
+	FACILITY_WARNING,
+	FACILITY_FAILURE,
+	FACILITY_HELP,
+} FACILITY_CODE;
+
+typedef struct _SOURCE_INFO_DATA
+{
+	PR_STRING url;
+	PR_BYTE bytes;
+
+	HANDLE hfile; // source file handle
+	HANDLE hfile_out; // hosts file
+
+	ULONG_PTR source_hash;
+
+	ULONG flags;
+} SOURCE_INFO_DATA, *PSOURCE_INFO_DATA;
+
+#define SI_FLAG_SOURCES 0x0001
+#define SI_FLAG_USERLIST 0x0002
+#define SI_FLAG_WHITELIST 0x0004
+#define SI_FLAG_BLACKLIST 0x0008
+#define SI_FLAG_ISFILEPATH 0x0010
+
+#define SI_PROCESS_READ_CONFIG 0x0001
+#define SI_PROCESS_PREPARE_DNSCRYPT 0x0002
+#define SI_PROCESS_START 0x0004
+
+PR_STRING _app_print_getsourcetext (_In_ PSOURCE_INFO_DATA source_data);
+PR_STRING _app_print_gettext (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PSOURCE_INFO_DATA source_data, _In_opt_ LPCWSTR text);
+VOID _app_print_status (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PSOURCE_INFO_DATA source_data, _In_opt_ LPCWSTR text);
+
 BOOLEAN _app_hosts_initialize ();
 VOID _app_hosts_destroy ();
 VOID _app_hosts_writeheader ();
