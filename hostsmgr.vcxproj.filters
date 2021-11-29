@@ -24,6 +24,9 @@
     <ClCompile Include="..\routine\rapp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\processor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\routine\routine.h">
@@ -45,6 +48,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\processor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\global.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

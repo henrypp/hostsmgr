@@ -359,6 +359,7 @@
     <ClCompile Include="..\routine\rapp.c" />
     <ClCompile Include="..\routine\routine.c" />
     <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\processor.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\routine\ntapi.h" />
@@ -366,7 +367,9 @@
     <ClInclude Include="..\routine\rconfig.h" />
     <ClInclude Include="..\routine\routine.h" />
     <ClInclude Include="src\app.h" />
+    <ClInclude Include="src\global.h" />
     <ClInclude Include="src\main.h" />
+    <ClInclude Include="src\processor.h" />
     <ClInclude Include="src\resource.h" />
   </ItemGroup>
   <ItemGroup>
