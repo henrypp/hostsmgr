@@ -164,7 +164,9 @@ VOID _app_print_status (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PS
 			_r_console_writestring (L"-path       output file location (def. \".\\hosts\")\r\n\
 -ip         ip address to be set as resolver (def. 0.0.0.0)\r\n\
 -os         new line format; \"win\", \"linux\" or \"mac\" (def. \"win\")\r\n\
+-dnscrypt   generate hosts list in dnscrypt mode (opt.)\r\n\
 -nobackup   do not create backup for output file (opt.)\r\n\
+-nointro    do not write introduction header into file (opt.)\r\n\
 -noresolve  do not set resolver, just generate hosts list (opt.)\r\n\
 -nocache    do not use cache files, load directly from internet (opt.)\r\n\
 \r\n");
