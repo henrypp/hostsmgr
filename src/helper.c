@@ -9,7 +9,7 @@ FORCEINLINE VOID _app_print_sourceresult (_In_ PSOURCE_INFO_DATA source_data, _I
 	WCHAR numbers[128];
 
 	_r_format_number (numbers, RTL_NUMBER_OF (numbers), item_count);
-	_r_str_printf (buffer, RTL_NUMBER_OF (buffer), L"(%s items in %4.03f sec.)", numbers, _r_sys_finalexecutiontime (start_time));
+	_r_str_printf (buffer, RTL_NUMBER_OF (buffer), L"(%s items in %.03f sec.)", numbers, _r_sys_finalexecutiontime (start_time));
 
 	_app_print_status (item_count ? FACILITY_SUCCESS : FACILITY_WARNING, 0, source_data, buffer);
 }
@@ -452,7 +452,7 @@ VOID _app_sources_parse (_In_ ULONG flags)
 	}
 	else
 	{
-		_r_workqueue_initialize (&work_queue, 0, 16, 250, NULL);
+		_r_workqueue_initialize (&work_queue, 0, 8, 250, NULL);
 	}
 
 	if (flags & SI_PROCESS_READ_CONFIG)
