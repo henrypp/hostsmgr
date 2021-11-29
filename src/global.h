@@ -17,4 +17,4 @@ DECLSPEC_SELECTANY R_QUEUED_LOCK console_lock = PR_QUEUED_LOCK_INIT;
 DECLSPEC_SELECTANY R_QUEUED_LOCK exclude_lock = PR_QUEUED_LOCK_INIT;
 DECLSPEC_SELECTANY R_QUEUED_LOCK exclude_mask_lock = PR_QUEUED_LOCK_INIT;
 
-#include "processor.h"
+#include "helper.h"
