@@ -97,8 +97,6 @@ VOID _app_print_status (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PS
 		{
 			_app_print_status (FACILITY_TITLE, 0, NULL, L"Configuration");
 
-			_r_queuedlock_acquireexclusive (&console_lock);
-
 			_r_console_writestringformat (L"Path: %s\r\nResolver: %s\r\nCaching: %s\r\nDnscrypt mode: %s\r\n",
 										  _r_obj_getstring (config.hosts_file),
 										  config.is_hostonly ? L"<disabled>" : _r_obj_getstring (config.hosts_destination),
@@ -106,19 +104,12 @@ VOID _app_print_status (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PS
 										  !config.is_dnscrypt ? L"<disabled>" : L"<enabled>"
 			);
 
-			_r_queuedlock_releaseexclusive (&console_lock);
-
 			break;
 		}
 
 		case FACILITY_TITLE:
 		{
-			_r_queuedlock_acquireexclusive (&console_lock);
-
 			_r_console_writestringformat (L"\r\n%s:\r\n", text);
-
-			_r_queuedlock_releaseexclusive (&console_lock);
-
 			break;
 		}
 
@@ -159,8 +150,6 @@ VOID _app_print_status (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PS
 
 		case FACILITY_HELP:
 		{
-			_r_queuedlock_acquireexclusive (&console_lock);
-
 			_app_print_status (FACILITY_TITLE, 0, NULL, L"Usage");
 
 			_r_console_writestring (L"hostsmgr -ip 127.0.0.1 -os win -path \".\\out_file\"\r\n");
@@ -176,8 +165,6 @@ VOID _app_print_status (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PS
 -noresolve  do not set resolver, just generate hosts list (opt.)\r\n\
 -nocache    do not use cache files, load directly from internet (opt.)\r\n\
 \r\n");
-
-			_r_queuedlock_releaseexclusive (&console_lock);
 
 			break;
 		}
