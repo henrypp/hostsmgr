@@ -37,7 +37,7 @@ typedef struct _SOURCE_INFO_DATA
 #define SI_PROCESS_START 0x0004
 
 PR_STRING _app_print_getsourcetext (_In_ PSOURCE_INFO_DATA source_data);
-PR_STRING _app_print_gettext (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PSOURCE_INFO_DATA source_data, _In_opt_ LPCWSTR text);
+PR_STRING _app_print_gettext (_In_opt_ ULONG code, _In_opt_ PSOURCE_INFO_DATA source_data, _In_opt_ LPCWSTR text);
 VOID _app_print_status (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PSOURCE_INFO_DATA source_data, _In_opt_ LPCWSTR text);
 
 BOOLEAN _app_hosts_initialize ();

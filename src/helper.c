@@ -57,7 +57,7 @@ PR_STRING _app_print_getsourcetext (_In_ PSOURCE_INFO_DATA source_data)
 	return string;
 }
 
-PR_STRING _app_print_gettext (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PSOURCE_INFO_DATA source_data, _In_opt_ LPCWSTR text)
+PR_STRING _app_print_gettext (_In_opt_ ULONG code, _In_opt_ PSOURCE_INFO_DATA source_data, _In_opt_ LPCWSTR text)
 {
 	R_STRINGBUILDER sb;
 	PR_STRING string;
@@ -137,7 +137,7 @@ VOID _app_print_status (_In_ FACILITY_CODE fac, _In_opt_ ULONG code, _In_opt_ PS
 
 			_r_console_setcolor (config.con_attr);
 
-			string = _app_print_gettext (fac, code, source_data, text);
+			string = _app_print_gettext (code, source_data, text);
 
 			_r_console_writestring2 (string);
 
