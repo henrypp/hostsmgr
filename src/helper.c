@@ -40,8 +40,8 @@ PR_STRING _app_print_getsourcetext (_In_ PSOURCE_INFO_DATA source_data)
 			if (pos != SIZE_MAX)
 				_r_obj_setstringlength (url_parts.path, pos * sizeof (WCHAR));
 
-			_r_obj_movereference (&url_parts.host, _r_path_compact (url_parts.host->buffer, 24)); // compact
-			_r_obj_movereference (&url_parts.path, _r_path_compact (url_parts.path->buffer, 48)); // compact
+			_r_obj_movereference (&url_parts.host, _r_path_compact (url_parts.host, 24)); // compact
+			_r_obj_movereference (&url_parts.path, _r_path_compact (url_parts.path, 48)); // compact
 
 			_r_str_trimstring (url_parts.path, &sr, 0);
 
