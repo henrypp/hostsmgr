@@ -250,7 +250,7 @@ VOID _app_hosts_writestring (_In_ HANDLE hfile, _In_ PR_STRING string)
 
 	status = _r_str_unicode2multibyte (&string->sr, &bytes);
 
-	if (NT_SUCCESS (status))
+	if (status == STATUS_SUCCESS)
 	{
 		WriteFile (hfile, bytes->buffer, (ULONG)bytes->length, &unused, NULL);
 
@@ -343,7 +343,7 @@ LONG _app_parser_readfile (_Inout_ PSOURCE_INFO_DATA source_data, _In_opt_ HANDL
 	NTSTATUS status;
 
 	if (!source_data->bytes)
-		source_data->bytes = _r_fs_readfile (source_data->hfile);
+		_r_fs_readfile (source_data->hfile, &source_data->bytes);
 
 	if (!source_data->bytes)
 		return 0;
@@ -362,7 +362,7 @@ LONG _app_parser_readfile (_Inout_ PSOURCE_INFO_DATA source_data, _In_opt_ HANDL
 
 		status = _r_str_multibyte2unicode (&line_sr, &line_string);
 
-		if (NT_SUCCESS (status))
+		if (status == STATUS_SUCCESS)
 		{
 			hash_code = _app_parser_readline (line_string, source_data->flags);
 
@@ -379,7 +379,6 @@ LONG _app_parser_readfile (_Inout_ PSOURCE_INFO_DATA source_data, _In_opt_ HANDL
 				}
 				else
 				{
-
 					if (!_app_whitelist_isfound (hash_code, line_string))
 					{
 						if (hfile_out)
@@ -577,7 +576,7 @@ VOID NTAPI _app_sources_parsethread (_In_ PVOID arglist, _In_ ULONG busy_count)
 
 					if (!_r_fs_getsize (source_data->hfile) || (GetFileTime (source_data->hfile, &local_timestamp, NULL, NULL) && CompareFileTime (&local_timestamp, &remote_timestamp) == -1))
 					{
-						bytes = _r_obj_createbyte_ex (NULL, 65536);
+						bytes = _r_obj_createbyte_ex (NULL, PR_SIZE_INET_READ_BUFFER);
 
 						while (_r_inet_readrequest (hrequest, bytes->buffer, (ULONG)bytes->length, &readed, NULL))
 						{
