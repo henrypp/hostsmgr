@@ -9,6 +9,11 @@
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 //
+// Icon resources
+//
+IDI_MAIN			ICON		"res\\100.ico"
+
+//
 // Manifest resource
 //
 1			RT_MANIFEST		"res\\manifest.xml"
