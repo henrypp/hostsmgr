@@ -1,5 +1,5 @@
 // hostsmgr
-// Copyright (c) 2016-2021 Henry++
+// Copyright (c) 2016-2022 Henry++
 
 #include "global.h"
 
@@ -12,7 +12,7 @@ VOID _app_startupdate ()
 	if (!_app_hosts_initialize ())
 		return;
 
-	start_time = _r_sys_startexecutiontime ();
+	start_time = _r_perf_getexecutionstart ();
 
 	// initialize internet session
 	config.hsession = _r_inet_createsession (_r_app_getuseragent ());
@@ -92,7 +92,7 @@ VOID _app_startupdate ()
 		config.total_sources,
 		hosts_format,
 		size_format,
-		_r_sys_finalexecutiontime (start_time)
+		_r_perf_getexecutionfinal (start_time)
 	);
 
 	_app_hosts_destroy ();
@@ -164,7 +164,7 @@ VOID _app_parsearguments (
 			if (!key_value.length)
 				continue;
 
-			_r_obj_movereference (&config.hosts_file, _r_str_expandenvironmentstring (&key_value));
+			_r_obj_movereference (&config.hosts_file, _r_str_environmentexpandstring (&key_value));
 		}
 		else if (_r_str_isequal2 (&key_name, L"os", TRUE))
 		{
@@ -233,7 +233,7 @@ VOID _app_setdefaults ()
 
 	// set hosts path
 	if (_r_obj_isstringempty (config.hosts_file))
-		_r_obj_movereference (&config.hosts_file, _r_path_search (L".\\hosts"));
+		_r_obj_movereference (&config.hosts_file, _r_path_search (L".\\hosts", NULL, TRUE));
 
 	_r_obj_movereference (
 		&config.hosts_file_temp,
