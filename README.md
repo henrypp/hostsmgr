@@ -1,8 +1,8 @@
 <h1 align="center">hostsmgr</h1>
 
 <p align="center">
-	<a href="https://github.com/henrypp/hostsmgr/releases"><img src="https://img.shields.io/github/v/release/henrypp/hostsmgr?style=flat-square&include_prereleases&label=version" /></a>
-	<a href="https://github.com/henrypp/hostsmgr/releases"><img src="https://img.shields.io/github/downloads/henrypp/hostsmgr/total.svg?style=flat-square" /></a>
+	<a href="https://github.com/henrypp/hostsmgr/releases"><img src="https://img.shields.io/github/v/release/henrypp/hostsmgr?style=flat-square&include_prereleases&label=version&fix" /></a>
+	<a href="https://github.com/henrypp/hostsmgr/releases"><img src="https://img.shields.io/github/downloads/henrypp/hostsmgr/total.svg?style=flat-square&fix" /></a>
 	<a href="https://github.com/henrypp/hostsmgr/issues"><img src="https://img.shields.io/github/issues-raw/henrypp/hostsmgr.svg?style=flat-square&label=issues" /></a>
 	<a href="https://github.com/henrypp/hostsmgr/graphs/contributors"><img src="https://img.shields.io/github/contributors/henrypp/hostsmgr?style=flat-square" /></a>
 	<a href="https://github.com/henrypp/hostsmgr/blob/master/LICENSE"><img src="https://img.shields.io/github/license/henrypp/hostsmgr?style=flat-square" /></a>
@@ -11,7 +11,7 @@
 -------
 
 <p align="center">
-	<img src="https://www.henrypp.org/images/hostsmgr.png?fixcache" />
+	<img src="https://www.henrypp.org/images/hostsmgr.png?fix" />
 </p>
 
 ### Description:
