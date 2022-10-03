@@ -5,9 +5,11 @@
 
 VOID _app_startupdate ()
 {
-	WCHAR hosts_format[128];
-	WCHAR size_format[128];
+	WCHAR hosts_format[64];
+	WCHAR size_format[64];
+	WCHAR new_size_format[64];
 	LONG64 start_time;
+	LONG64 new_size;
 
 	if (!_app_hosts_initialize ())
 		return;
@@ -18,7 +20,7 @@ VOID _app_startupdate ()
 	config.hsession = _r_inet_createsession (_r_app_getuseragent ());
 
 	if (!config.hsession)
-		_app_print_status (FACILITY_WARNING, GetLastError (), NULL, L"Inet failure");
+		_app_print_status (FACILITY_WARNING, GetLastError (), NULL, L"[winhttp]");
 
 	_app_print_status (FACILITY_TITLE, 0, NULL, L"Reading configuration");
 
@@ -29,41 +31,41 @@ VOID _app_startupdate ()
 	_app_sources_additem (
 		_r_str_crc32 (&config.sources_file->sr, TRUE),
 		config.sources_file,
-		SI_FLAG_SOURCES
+		SRC_FLAG_SOURCE | SRC_FLAG_IS_FILEPATH
 	);
 
 	// add whitelist source
 	_app_sources_additem (
 		_r_str_crc32 (&config.whitelist_file->sr, TRUE),
 		config.whitelist_file,
-		SI_FLAG_WHITELIST
+		SRC_FLAG_WHITELIST | SRC_FLAG_IS_FILEPATH
 	);
 
 	// add userlist source
 	_app_sources_additem (
 		_r_str_crc32 (&config.userlist_file->sr, TRUE),
 		config.userlist_file,
-		SI_FLAG_BLACKLIST_USER
+		SRC_FLAG_USERLIST | SRC_FLAG_IS_FILEPATH
 	);
 
 	// parse sources
-	_app_sources_parse (SI_PROCESS_READ_CONFIG);
+	_app_sources_parse (ACTION_READ_SOURCE);
 
 	// write header
 	if (!config.is_nointro)
 		_app_hosts_writeheader ();
 
-	if (config.is_dnscrypt)
-	{
-		_app_print_status (FACILITY_TITLE, 0, NULL, L"Calculate dnscrypt whitelist");
+	// parse user configuration
+	_app_sources_parse (ACTION_READ_USERCONFIG);
 
-		_app_sources_parse (SI_PROCESS_PREPARE_DNSCRYPT);
-	}
+	// prepare dnscrypt configuration
+	if (config.is_dnscrypt)
+		_app_sources_parse (ACTION_PREPARE_DNSCRYPT);
 
 	// process sources
-	_app_print_status (FACILITY_TITLE, 0, NULL, L"Reading sources");
+	_app_sources_parse (ACTION_READ_HOSTS);
 
-	_app_sources_parse (SI_PROCESS_START);
+	new_size = _r_fs_getsize (config.hfile);
 
 	_app_hosts_destroy (); // required!
 
@@ -86,16 +88,17 @@ VOID _app_startupdate ()
 
 	_r_format_number (hosts_format, RTL_NUMBER_OF (hosts_format), config.total_hosts);
 	_r_format_bytesize64 (size_format, RTL_NUMBER_OF (size_format), config.total_size);
+	_r_format_bytesize64 (new_size_format, RTL_NUMBER_OF (new_size_format), new_size);
 
 	_r_console_writestringformat (
-		L"\r\nFinished %" TEXT (PR_LONG) L" sources with %s items from %s in %.03f seconds...\r\n",
+		L"\r\nFinished %" TEXT (PR_LONG) L" sources with %s items and %s into %s in %.03f seconds...\r\n",
 		config.total_sources,
 		hosts_format,
 		size_format,
+		new_size_format,
 		_r_perf_getexecutionfinal (start_time)
 	);
 
-	_app_hosts_destroy ();
 	_app_sources_destroy ();
 
 	if (config.hsession)
@@ -112,6 +115,7 @@ VOID _app_parsearguments (
 {
 	R_STRINGREF key_name;
 	R_STRINGREF key_value;
+	WCHAR chr;
 
 	for (INT i = 0; i < argc; i++)
 	{
@@ -137,7 +141,10 @@ VOID _app_parsearguments (
 			if (!key_value.length)
 				continue;
 
-			_r_obj_movereference (&config.hosts_destination, _r_obj_createstring3 (&key_value));
+			_r_obj_movereference (
+				&config.hosts_destination,
+				_r_obj_createstring3 (&key_value)
+			);
 		}
 		else if (_r_str_isequal2 (&key_name, L"dnscrypt", TRUE))
 		{
@@ -164,12 +171,13 @@ VOID _app_parsearguments (
 			if (!key_value.length)
 				continue;
 
-			_r_obj_movereference (&config.hosts_file, _r_str_environmentexpandstring (&key_value));
+			_r_obj_movereference (
+				&config.hosts_file,
+				_r_str_environmentexpandstring (&key_value)
+			);
 		}
 		else if (_r_str_isequal2 (&key_name, L"os", TRUE))
 		{
-			WCHAR chr;
-
 			if (!key_value.length)
 				continue;
 
@@ -191,6 +199,7 @@ VOID _app_parsearguments (
 		else if (_r_str_isstartswith2 (&key_name, L"help", TRUE))
 		{
 			_app_print_status (FACILITY_HELP, 0, NULL, NULL);
+
 			return;
 		}
 	}
@@ -198,15 +207,23 @@ VOID _app_parsearguments (
 
 VOID _app_setdefaults ()
 {
+	_r_freelist_initialize (&context_list, sizeof (SOURCE_CONTEXT), 12);
+
 	config.sources_table = _r_obj_createhashtable_ex (sizeof (SOURCE_INFO_DATA), 64, NULL);
 	config.exclude_table = _r_obj_createhashtable_ex (sizeof (BOOLEAN), 1024, NULL);
 	config.exclude_table_mask = _r_obj_createhashtablepointer (1024);
+	config.dnscrypt_list = _r_obj_createhashtablepointer (1024);
 
 	if (config.is_dnscrypt)
 		config.is_hostonly = TRUE;
 
 	if (_r_obj_isstringempty (config.hosts_destination))
-		_r_obj_movereference (&config.hosts_destination, _r_obj_createstring (L"0.0.0.0"));
+	{
+		_r_obj_movereference (
+			&config.hosts_destination,
+			_r_obj_createstring (L"0.0.0.0")
+		);
+	}
 
 	// configure paths
 	_r_obj_movereference (
@@ -233,7 +250,12 @@ VOID _app_setdefaults ()
 
 	// set hosts path
 	if (_r_obj_isstringempty (config.hosts_file))
-		_r_obj_movereference (&config.hosts_file, _r_path_search (L".\\hosts", NULL, TRUE));
+	{
+		_r_obj_movereference (
+			&config.hosts_file,
+			_r_path_search (L".\\hosts", NULL, TRUE)
+		);
+	}
 
 	_r_obj_movereference (
 		&config.hosts_file_temp,
@@ -272,6 +294,7 @@ INT _cdecl wmain (
 	if (argc <= 1)
 	{
 		_app_print_status (FACILITY_HELP, 0, NULL, NULL);
+
 		return ERROR_SUCCESS;
 	}
 

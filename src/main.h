@@ -25,12 +25,13 @@ typedef struct _STATIC_DATA
 	PR_HASHTABLE sources_table;
 	PR_HASHTABLE exclude_table;
 	PR_HASHTABLE exclude_table_mask;
+	PR_HASHTABLE dnscrypt_list;
 
-	HANDLE hfile; // hosts file
 	HINTERNET hsession;
+	HANDLE hfile; // hosts file
 
 	volatile LONG64 total_size;
-	volatile LONG total_hosts;
+	volatile LONG64 total_hosts;
 	volatile LONG total_sources;
 
 	WORD con_attr;
