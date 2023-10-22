@@ -1,15 +1,15 @@
 // hostsmgr
-// Copyright (c) 2016-2022 Henry++
+// Copyright (c) 2016-2023 Henry++
 
 #include "global.h"
 
 VOID _app_startupdate ()
 {
+	LARGE_INTEGER new_size;
 	WCHAR hosts_format[64];
 	WCHAR size_format[64];
 	WCHAR new_size_format[64];
 	LONG64 start_time;
-	LONG64 new_size;
 
 	if (!_app_hosts_initialize ())
 		return;
@@ -28,25 +28,13 @@ VOID _app_startupdate ()
 	_app_whitelist_initialize ();
 
 	// add sources list
-	_app_sources_additem (
-		_r_str_crc32 (&config.sources_file->sr, TRUE),
-		config.sources_file,
-		SRC_FLAG_SOURCE | SRC_FLAG_IS_FILEPATH
-	);
+	_app_sources_additem (_r_str_crc32 (&config.sources_file->sr, TRUE), config.sources_file, SRC_FLAG_SOURCE | SRC_FLAG_IS_FILEPATH);
 
 	// add whitelist source
-	_app_sources_additem (
-		_r_str_crc32 (&config.whitelist_file->sr, TRUE),
-		config.whitelist_file,
-		SRC_FLAG_WHITELIST | SRC_FLAG_IS_FILEPATH
-	);
+	_app_sources_additem (_r_str_crc32 (&config.whitelist_file->sr, TRUE), config.whitelist_file, SRC_FLAG_WHITELIST | SRC_FLAG_IS_FILEPATH);
 
 	// add userlist source
-	_app_sources_additem (
-		_r_str_crc32 (&config.userlist_file->sr, TRUE),
-		config.userlist_file,
-		SRC_FLAG_USERLIST | SRC_FLAG_IS_FILEPATH
-	);
+	_app_sources_additem (_r_str_crc32 (&config.userlist_file->sr, TRUE), config.userlist_file, SRC_FLAG_USERLIST | SRC_FLAG_IS_FILEPATH);
 
 	// parse sources
 	_app_sources_parse (ACTION_READ_SOURCE);
@@ -65,30 +53,20 @@ VOID _app_startupdate ()
 	// process sources
 	_app_sources_parse (ACTION_READ_HOSTS);
 
-	new_size = _r_fs_getsize (config.hfile);
+	_r_fs_getsize (config.hfile, &new_size);
 
 	_app_hosts_destroy (); // required!
 
-	SetFileAttributes (config.hosts_file->buffer, FILE_ATTRIBUTE_NORMAL);
+	_r_fs_setattributes (config.hosts_file->buffer, NULL, FILE_ATTRIBUTE_NORMAL);
 
 	if (!config.is_nobackup)
-	{
-		_r_fs_movefile (
-			config.hosts_file->buffer,
-			config.hosts_file_backup->buffer,
-			MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED
-		);
-	}
+		_r_fs_movefile (config.hosts_file->buffer, config.hosts_file_backup->buffer);
 
-	_r_fs_movefile (
-		config.hosts_file_temp->buffer,
-		config.hosts_file->buffer,
-		MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED
-	);
+	_r_fs_movefile (config.hosts_file_temp->buffer, config.hosts_file->buffer);
 
 	_r_format_number (hosts_format, RTL_NUMBER_OF (hosts_format), config.total_hosts);
 	_r_format_bytesize64 (size_format, RTL_NUMBER_OF (size_format), config.total_size);
-	_r_format_bytesize64 (new_size_format, RTL_NUMBER_OF (new_size_format), new_size);
+	_r_format_bytesize64 (new_size_format, RTL_NUMBER_OF (new_size_format), new_size.QuadPart);
 
 	_r_console_writestringformat (
 		L"\r\nFinished %" TEXT (PR_LONG) L" sources with %s items and %s into %s in %.03f seconds...\r\n",
@@ -104,6 +82,7 @@ VOID _app_startupdate ()
 	if (config.hsession)
 	{
 		_r_inet_close (config.hsession);
+
 		config.hsession = NULL;
 	}
 }
@@ -115,7 +94,9 @@ VOID _app_parsearguments (
 {
 	R_STRINGREF key_name;
 	R_STRINGREF key_value;
+	PR_STRING string;
 	WCHAR chr;
+	NTSTATUS status;
 
 	for (INT i = 0; i < argc; i++)
 	{
@@ -141,10 +122,7 @@ VOID _app_parsearguments (
 			if (!key_value.length)
 				continue;
 
-			_r_obj_movereference (
-				&config.hosts_destination,
-				_r_obj_createstring3 (&key_value)
-			);
+			_r_obj_movereference (&config.hosts_destination, _r_obj_createstring3 (&key_value));
 		}
 		else if (_r_str_isequal2 (&key_name, L"dnscrypt", TRUE))
 		{
@@ -171,10 +149,10 @@ VOID _app_parsearguments (
 			if (!key_value.length)
 				continue;
 
-			_r_obj_movereference (
-				&config.hosts_file,
-				_r_str_environmentexpandstring (&key_value)
-			);
+			status = _r_str_environmentexpandstring (&key_value, &string);
+
+			if (NT_SUCCESS (status))
+				_r_obj_movereference (&config.hosts_file, string);
 		}
 		else if (_r_str_isequal2 (&key_name, L"os", TRUE))
 		{
@@ -207,6 +185,9 @@ VOID _app_parsearguments (
 
 VOID _app_setdefaults ()
 {
+	PR_STRING string;
+	NTSTATUS status;
+
 	_r_freelist_initialize (&context_list, sizeof (SOURCE_CONTEXT), 12);
 
 	config.sources_table = _r_obj_createhashtable_ex (sizeof (SOURCE_INFO_DATA), 64, NULL);
@@ -218,58 +199,35 @@ VOID _app_setdefaults ()
 		config.is_hostonly = TRUE;
 
 	if (_r_obj_isstringempty (config.hosts_destination))
-	{
-		_r_obj_movereference (
-			&config.hosts_destination,
-			_r_obj_createstring (L"0.0.0.0")
-		);
-	}
+		_r_obj_movereference (&config.hosts_destination, _r_obj_createstring (L"0.0.0.0"));
 
 	// configure paths
-	_r_obj_movereference (
-		&config.sources_file,
-		_r_obj_concatstrings (2, _r_app_getdirectory ()->buffer, L"\\hosts_sources.dat")
-	);
+	_r_obj_movereference (&config.sources_file, _r_obj_concatstrings (2, _r_app_getdirectory ()->buffer, L"\\hosts_sources.dat"));
 
-	_r_obj_movereference (
-		&config.userlist_file,
-		_r_obj_concatstrings (2, _r_app_getdirectory ()->buffer, L"\\hosts_userlist.dat")
-	);
+	_r_obj_movereference (&config.userlist_file, _r_obj_concatstrings (2, _r_app_getdirectory ()->buffer, L"\\hosts_userlist.dat"));
 
-	_r_obj_movereference (
-		&config.whitelist_file,
-		_r_obj_concatstrings (2, _r_app_getdirectory ()->buffer, L"\\hosts_whitelist.dat")
-	);
+	_r_obj_movereference (&config.whitelist_file, _r_obj_concatstrings (2, _r_app_getdirectory ()->buffer, L"\\hosts_whitelist.dat"));
 
-	_r_obj_movereference (
-		&config.cache_dir,
-		_r_obj_concatstrings (2, _r_app_getprofiledirectory ()->buffer, L"\\cache")
-	);
+	_r_obj_movereference (&config.cache_dir, _r_obj_concatstrings (2, _r_app_getprofiledirectory ()->buffer, L"\\cache"));
 
 	_r_fs_mkdir (config.cache_dir->buffer);
 
 	// set hosts path
 	if (_r_obj_isstringempty (config.hosts_file))
 	{
-		_r_obj_movereference (
-			&config.hosts_file,
-			_r_path_search (L".\\hosts", NULL, TRUE)
-		);
+		status = _r_path_search (L".\\hosts", NULL, &string);
+
+		if (NT_SUCCESS (status))
+			_r_obj_movereference (&config.hosts_file, string);
 	}
 
-	_r_obj_movereference (
-		&config.hosts_file_temp,
-		_r_obj_concatstrings (2, _r_obj_getstring (config.hosts_file), L".tmp")
-	);
+	_r_obj_movereference (&config.hosts_file_temp, _r_obj_concatstrings (2, _r_obj_getstring (config.hosts_file), L".tmp"));
 
-	_r_obj_movereference (
-		&config.hosts_file_backup,
-		_r_obj_concatstrings (2, _r_obj_getstring (config.hosts_file), L".bak")
-	);
+	_r_obj_movereference (&config.hosts_file_backup, _r_obj_concatstrings (2, _r_obj_getstring (config.hosts_file), L".bak"));
 
 	// set end-of-line type
 	if (_r_obj_isstringempty (config.eol))
-		config.eol = _r_obj_createstring (L"\r\n");
+		config.eol = _r_obj_createstring (L"\r\n"); // windows
 
 	config.con_attr = _r_console_getcolor ();
 }
@@ -281,15 +239,10 @@ INT _cdecl wmain (
 {
 	SetConsoleTitle (_r_app_getname ());
 
-	if (!_r_app_initialize ())
+	if (!_r_app_initialize (NULL))
 		return ERROR_APP_INIT_FAILURE;
 
-	_r_console_writestringformat (
-		L"%s %s\r\n%s\r\n",
-		_r_app_getname (),
-		_r_app_getversion (),
-		_r_app_getcopyright ()
-	);
+	_r_console_writestringformat (L"%s %s\r\n%s\r\n", _r_app_getname (), _r_app_getversion (), _r_app_getcopyright ());
 
 	if (argc <= 1)
 	{
@@ -306,7 +259,7 @@ INT _cdecl wmain (
 
 	_app_startupdate ();
 
-	//_r_fs_deletedirectory (config.cache_dir->buffer, FALSE);
+	_r_fs_deletedirectory (config.cache_dir->buffer, FALSE);
 
 	return ERROR_SUCCESS;
 }

@@ -9,7 +9,7 @@ typedef enum _FACILITY_CODE
 	FACILITY_TITLE,
 	FACILITY_SUCCESS,
 	FACILITY_WARNING,
-	FACILITY_FAILURE,
+	FACILITY_ERROR,
 	FACILITY_HELP,
 } FACILITY_CODE;
 
@@ -77,7 +77,7 @@ PR_STRING _app_print_gettext (
 
 VOID _app_print_status (
 	_In_ FACILITY_CODE fac,
-	_In_opt_ ULONG status,
+	_In_opt_ LONG status,
 	_In_opt_ PSOURCE_INFO_DATA source_data,
 	_In_opt_ LPCWSTR text
 );
