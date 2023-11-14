@@ -20,7 +20,7 @@ VOID _app_startupdate ()
 	config.hsession = _r_inet_createsession (_r_app_getuseragent ());
 
 	if (!config.hsession)
-		_app_print_status (FACILITY_WARNING, GetLastError (), NULL, L"[winhttp]");
+		_app_print_status (FACILITY_WARNING, PebLastError (), NULL, L"[winhttp]");
 
 	_app_print_status (FACILITY_TITLE, 0, NULL, L"Reading configuration");
 
@@ -28,13 +28,13 @@ VOID _app_startupdate ()
 	_app_whitelist_initialize ();
 
 	// add sources list
-	_app_sources_additem (_r_str_crc32 (&config.sources_file->sr, TRUE), config.sources_file, SRC_FLAG_SOURCE | SRC_FLAG_IS_FILEPATH);
+	_app_sources_additem (_r_str_gethash2 (config.sources_file, TRUE), config.sources_file, SRC_FLAG_SOURCE | SRC_FLAG_IS_FILEPATH);
 
 	// add whitelist source
-	_app_sources_additem (_r_str_crc32 (&config.whitelist_file->sr, TRUE), config.whitelist_file, SRC_FLAG_WHITELIST | SRC_FLAG_IS_FILEPATH);
+	_app_sources_additem (_r_str_gethash2 (config.whitelist_file, TRUE), config.whitelist_file, SRC_FLAG_WHITELIST | SRC_FLAG_IS_FILEPATH);
 
 	// add userlist source
-	_app_sources_additem (_r_str_crc32 (&config.userlist_file->sr, TRUE), config.userlist_file, SRC_FLAG_USERLIST | SRC_FLAG_IS_FILEPATH);
+	_app_sources_additem (_r_str_gethash2 (config.userlist_file, TRUE), config.userlist_file, SRC_FLAG_USERLIST | SRC_FLAG_IS_FILEPATH);
 
 	// parse sources
 	_app_sources_parse (ACTION_READ_SOURCE);
@@ -88,7 +88,7 @@ VOID _app_startupdate ()
 }
 
 VOID _app_parsearguments (
-	_In_reads_ (argc) LPCWSTR argv[],
+	_In_reads_ (argc) LPWSTR argv[],
 	_In_ INT argc
 )
 {
@@ -100,7 +100,7 @@ VOID _app_parsearguments (
 
 	for (INT i = 0; i < argc; i++)
 	{
-		_r_obj_initializestringrefconst (&key_name, argv[i]);
+		_r_obj_initializestringref (&key_name, argv[i]);
 
 		if (_r_str_getlength3 (&key_name) <= 2)
 			continue;
@@ -110,7 +110,7 @@ VOID _app_parsearguments (
 
 		if (argc > (i + 1))
 		{
-			_r_obj_initializestringrefconst (&key_value, argv[i + 1]);
+			_r_obj_initializestringref (&key_value, argv[i + 1]);
 		}
 		else
 		{
@@ -210,7 +210,7 @@ VOID _app_setdefaults ()
 
 	_r_obj_movereference (&config.cache_dir, _r_obj_concatstrings (2, _r_app_getprofiledirectory ()->buffer, L"\\cache"));
 
-	_r_fs_mkdir (config.cache_dir->buffer);
+	_r_fs_createdirectory (config.cache_dir->buffer, 0);
 
 	// set hosts path
 	if (_r_obj_isstringempty (config.hosts_file))
@@ -234,7 +234,7 @@ VOID _app_setdefaults ()
 
 INT _cdecl wmain (
 	_In_ INT argc,
-	_In_reads_ (argc) LPCWSTR argv[]
+	_In_reads_ (argc) LPWSTR argv[]
 )
 {
 	SetConsoleTitle (_r_app_getname ());

@@ -383,7 +383,7 @@ ULONG_PTR _app_parser_readline (
 		return 0;
 
 	if (context->flags & ACTION_READ_SOURCE)
-		return _r_str_crc32 (&line->sr, TRUE);
+		return _r_str_gethash2 (line, TRUE);
 
 	space_pos = _r_str_findchar (&line->sr, L' ', FALSE);
 
@@ -428,7 +428,7 @@ ULONG_PTR _app_parser_readline (
 
 	_r_str_tolower (&line->sr); // cosmetics
 
-	return _r_str_crc32 (&line->sr, TRUE);
+	return _r_str_gethash2 (line, TRUE);
 }
 
 VOID _app_queue_item (
@@ -548,11 +548,11 @@ VOID _app_sources_parse (
 
 	if (flags & ACTION_TYPE_ST)
 	{
-		_r_workqueue_initialize (&work_queue, 0, 1, 1000, &environment, L"QueueST");
+		_r_workqueue_initialize (&work_queue, 1, &environment, L"QueueST");
 	}
 	else if (flags & ACTION_TYPE_MT)
 	{
-		_r_workqueue_initialize (&work_queue, 0, 12, 1000, &environment, L"QueueMT");
+		_r_workqueue_initialize (&work_queue, 12, &environment, L"QueueMT");
 	}
 	else
 	{
@@ -783,7 +783,7 @@ VOID _app_sources_processfile (
 
 					enum_key = 0;
 
-					checksum = _r_str_crc32 (&line_string->sr, TRUE);
+					checksum = _r_str_gethash2 (line_string, TRUE);
 
 					_r_queuedlock_acquireshared (&dnscrypt_lock);
 
@@ -813,9 +813,7 @@ VOID _app_sources_processfile (
 					}
 
 					_r_queuedlock_acquireexclusive (&dnscrypt_lock);
-
 					_r_obj_addhashtablepointer (config.dnscrypt_list, checksum, _r_obj_reference (line_string));
-
 					_r_queuedlock_releaseexclusive (&dnscrypt_lock);
 				}
 			}
@@ -881,7 +879,7 @@ VOID _app_whitelist_initialize ()
 
 	for (SIZE_T i = 0; i < RTL_NUMBER_OF (exclude_hosts); i++)
 	{
-		_r_obj_addhashtableitem (config.exclude_table, _r_str_crc32 (&exclude_hosts[i], FALSE), NULL);
+		_r_obj_addhashtableitem (config.exclude_table, _r_str_gethash3 (&exclude_hosts[i], FALSE), NULL);
 	}
 
 	_r_queuedlock_releaseexclusive (&exclude_lock);
@@ -942,7 +940,7 @@ BOOLEAN _app_whitelist_isfound (
 
 	if (!is_found)
 	{
-		if (!_r_obj_ishashtableempty (config.exclude_table_mask))
+		if (!_r_obj_isempty (config.exclude_table_mask))
 		{
 			enum_key = 0;
 
