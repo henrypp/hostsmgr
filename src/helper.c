@@ -16,9 +16,9 @@ VOID _app_util_downloadfile (
 
 	_r_fs_clearfile (hfile);
 
-	bytes = _r_obj_createbyte_ex (NULL, PR_SIZE_INET_READ_BUFFER);
+	bytes = _r_obj_createbyte_ex (NULL, PR_SIZE_BUFFER);
 
-	while (_r_inet_readrequest (hrequest, bytes->buffer, PR_SIZE_INET_READ_BUFFER, &readed, NULL))
+	while (_r_inet_readrequest (hrequest, bytes->buffer, PR_SIZE_BUFFER, &readed, NULL))
 	{
 		status = NtWriteFile (hfile, NULL, NULL, NULL, &isb, bytes->buffer, readed, NULL, NULL);
 
@@ -632,12 +632,12 @@ VOID NTAPI _app_sources_parsethread (
 	PSOURCE_CONTEXT context;
 	FILETIME remote_timestamp;
 	FILETIME local_timestamp;
-	LARGE_INTEGER local_size;
+	PR_STRING proxy_string = NULL;
 	HINTERNET hconnect;
 	HINTERNET hrequest;
-	LONG64 lastmod;
 	LONG64 remote_size;
-	ULONG status;
+	LONG64 local_size;
+	LONG64 lastmod;
 
 	context = (PSOURCE_CONTEXT)arglist;
 
@@ -652,16 +652,16 @@ VOID NTAPI _app_sources_parsethread (
 	{
 		if (config.hsession)
 		{
-			status = _r_inet_openurl (config.hsession, context->source_data->url, &hconnect, &hrequest, NULL);
+			proxy_string = _r_app_getproxyconfiguration ();
 
-			if (status != ERROR_SUCCESS)
+			if (!_r_inet_openurl (config.hsession, context->source_data->url, proxy_string, &hconnect, &hrequest, NULL))
 			{
-				_app_print_status (FACILITY_ERROR, status, context->source_data, L"[winhttp]");
+				_app_print_status (FACILITY_ERROR, PebLastError (), context->source_data, L"[winhttp]");
 			}
 			else
 			{
 				// query content length
-				_r_fs_getsize (context->source_data->hfile, &local_size);
+				_r_fs_getsize2 (context->source_data->hfile, NULL, &local_size);
 
 				remote_size = _r_inet_querycontentlength (hrequest);
 
@@ -672,7 +672,7 @@ VOID NTAPI _app_sources_parsethread (
 
 				_r_fs_gettimestamp (context->source_data->hfile, NULL, NULL, &local_timestamp);
 
-				if (!local_size.QuadPart || local_size.QuadPart != remote_size || CompareFileTime (&local_timestamp, &remote_timestamp) == -1)
+				if (!local_size || local_size != remote_size || CompareFileTime (&local_timestamp, &remote_timestamp) == -1)
 					_app_util_downloadfile (hrequest, context->source_data->hfile, &remote_timestamp);
 
 				_r_inet_close (hrequest);
@@ -684,6 +684,9 @@ VOID NTAPI _app_sources_parsethread (
 
 		_app_sources_processfile (context);
 	}
+
+	if (proxy_string)
+		_r_obj_dereference (proxy_string);
 
 	_r_freelist_deleteitem (&context_list, context);
 }

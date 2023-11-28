@@ -5,10 +5,10 @@
 
 VOID _app_startupdate ()
 {
-	LARGE_INTEGER new_size;
 	WCHAR hosts_format[64];
 	WCHAR size_format[64];
 	WCHAR new_size_format[64];
+	LONG64 new_size;
 	LONG64 start_time;
 
 	if (!_app_hosts_initialize ())
@@ -53,7 +53,7 @@ VOID _app_startupdate ()
 	// process sources
 	_app_sources_parse (ACTION_READ_HOSTS);
 
-	_r_fs_getsize (config.hfile, &new_size);
+	_r_fs_getsize2 (config.hfile, NULL, &new_size);
 
 	_app_hosts_destroy (); // required!
 
@@ -66,7 +66,7 @@ VOID _app_startupdate ()
 
 	_r_format_number (hosts_format, RTL_NUMBER_OF (hosts_format), config.total_hosts);
 	_r_format_bytesize64 (size_format, RTL_NUMBER_OF (size_format), config.total_size);
-	_r_format_bytesize64 (new_size_format, RTL_NUMBER_OF (new_size_format), new_size.QuadPart);
+	_r_format_bytesize64 (new_size_format, RTL_NUMBER_OF (new_size_format), new_size);
 
 	_r_console_writestringformat (
 		L"\r\nFinished %" TEXT (PR_LONG) L" sources with %s items and %s into %s in %.03f seconds...\r\n",
