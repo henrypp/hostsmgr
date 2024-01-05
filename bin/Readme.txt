@@ -10,7 +10,7 @@ Command line:
 -noresolve - do not set resolver, just generate hosts list (opt.)
 -nocache - do not use cache files, load directly from internet (opt.)
 
-Website: www.henrypp.org
-Support: support@henrypp.org
+Website: https://github.com/henrypp
+Support: sforce5@mail.ru
 
-(c) 2016-2022 Henry++
+(c) 2016-2024 Henry++

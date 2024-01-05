@@ -43,8 +43,8 @@ Binaries have GPG signature `matrix.scr.sig` in application folder.
 - Public key: [pubkey.asc](https://raw.githubusercontent.com/henrypp/builder/master/pubkey.asc) ([pgpkeys.eu](https://pgpkeys.eu/pks/lookup?op=index&fingerprint=on&search=0x5635B5FD))
 - Key ID: 0x5635B5FD
 - Fingerprint: D985 2361 1524 AB29 BE73 30AC 2881 20A7 5635 B5FD
+---
+- Website: [github.com/henrypp](https://github.com/henrypp)
+- Support: sforce5@mail.ru
 
-Website: [www.henrypp.org](https://www.henrypp.org)<br />
-Support: support@henrypp.org<br />
-<br />
-(c) 2016-2022 Henry++
+(c) 2016-2024 Henry++
