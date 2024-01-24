@@ -359,7 +359,6 @@
     <ClCompile Include="..\routine\src\rapp.c" />
     <ClCompile Include="..\routine\src\routine.c" />
     <ClCompile Include="src\main.c" />
-    <ClCompile Include="src\helper.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\routine\src\ntapi.h" />
@@ -371,7 +370,6 @@
     <ClInclude Include="src\app.h" />
     <ClInclude Include="src\global.h" />
     <ClInclude Include="src\main.h" />
-    <ClInclude Include="src\helper.h" />
     <ClInclude Include="src\resource.h" />
   </ItemGroup>
   <ItemGroup>
