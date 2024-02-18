@@ -211,7 +211,7 @@ PR_STRING _app_print_getsourcetext (
 			pos = _r_str_findchar (&url_parts.path->sr, L'?', FALSE);
 
 			if (pos != SIZE_MAX)
-				_r_obj_setstringlength (url_parts.path, pos * sizeof (WCHAR));
+				_r_obj_setstringlength (&url_parts.path->sr, pos * sizeof (WCHAR));
 
 			// compact
 			_r_obj_movereference (&url_parts.host, _r_path_compact (url_parts.host, 20));
@@ -479,7 +479,7 @@ ULONG_PTR _app_parser_readline (
 	comment_pos = _r_str_findchar (&line->sr, L'#', FALSE);
 
 	if (comment_pos != SIZE_MAX)
-		_r_obj_setstringlength (line, comment_pos * sizeof (WCHAR));
+		_r_obj_setstringlength (&line->sr, comment_pos * sizeof (WCHAR));
 
 	_r_str_replacechar (&line->sr, L'\t', L' ');
 	_r_str_trimstring (line, &trim_sr, 0);
@@ -544,7 +544,6 @@ VOID NTAPI _app_sources_parsethread (
 	PSOURCE_CONTEXT context;
 	FILETIME remote_timestamp;
 	FILETIME local_timestamp;
-	PR_STRING proxy_string = NULL;
 	HINTERNET hconnect;
 	HINTERNET hrequest;
 	LONG64 remote_size;
@@ -564,11 +563,9 @@ VOID NTAPI _app_sources_parsethread (
 	{
 		if (config.hsession)
 		{
-			proxy_string = _r_app_getproxyconfiguration ();
-
-			if (!_r_inet_openurl (config.hsession, context->source_data->url, proxy_string, &hconnect, &hrequest, NULL))
+			if (!_r_inet_openurl (config.hsession, context->source_data->url, &hconnect, &hrequest, NULL))
 			{
-				_app_print_status (FACILITY_ERROR, PebLastError (), context->source_data, L"[winhttp]");
+				_app_print_status (FACILITY_ERROR, NtLastError (), context->source_data, L"[winhttp]");
 			}
 			else
 			{
@@ -596,9 +593,6 @@ VOID NTAPI _app_sources_parsethread (
 
 		_app_sources_processfile (context);
 	}
-
-	if (proxy_string)
-		_r_obj_dereference (proxy_string);
 
 	_r_freelist_deleteitem (&context_list, context);
 }
@@ -971,6 +965,7 @@ VOID _app_startupdate ()
 	WCHAR hosts_format[64];
 	WCHAR size_format[64];
 	WCHAR new_size_format[64];
+	PR_STRING proxy_string = NULL;
 	LONG64 new_size;
 	LONG64 start_time;
 	NTSTATUS status;
@@ -996,11 +991,13 @@ VOID _app_startupdate ()
 
 	start_time = _r_perf_getexecutionstart ();
 
+	proxy_string = _r_app_getproxyconfiguration ();
+
 	// initialize internet session
-	config.hsession = _r_inet_createsession (_r_app_getuseragent ());
+	config.hsession = _r_inet_createsession (_r_app_getuseragent (), proxy_string);
 
 	if (!config.hsession)
-		_app_print_status (FACILITY_WARNING, PebLastError (), NULL, L"[winhttp]");
+		_app_print_status (FACILITY_WARNING, NtLastError (), NULL, L"[winhttp]");
 
 	_app_print_status (FACILITY_TITLE, 0, NULL, L"Reading configuration");
 
@@ -1049,9 +1046,9 @@ VOID _app_startupdate ()
 	_r_fs_setattributes (config.hosts_file->buffer, NULL, FILE_ATTRIBUTE_NORMAL);
 
 	if (!config.is_nobackup)
-		_r_fs_movefile (config.hosts_file->buffer, config.hosts_file_backup->buffer);
+		_r_fs_movefile (config.hosts_file->buffer, config.hosts_file_backup->buffer, FALSE);
 
-	_r_fs_movefile (config.hosts_file_temp->buffer, config.hosts_file->buffer);
+	_r_fs_movefile (config.hosts_file_temp->buffer, config.hosts_file->buffer, FALSE);
 
 	_r_format_number (hosts_format, RTL_NUMBER_OF (hosts_format), config.total_hosts);
 	_r_format_bytesize64 (size_format, RTL_NUMBER_OF (size_format), config.total_size);
@@ -1067,6 +1064,9 @@ VOID _app_startupdate ()
 	);
 
 	_app_sources_destroy ();
+
+	if (proxy_string)
+		_r_obj_dereference (proxy_string);
 
 	if (config.hsession)
 	{
