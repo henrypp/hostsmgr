@@ -218,8 +218,8 @@ PR_STRING _app_print_getsourcetext (
 
 			_r_obj_movereference (&url_parts.path, _r_path_compact (url_parts.path, 42));
 
-			_r_str_trimstring (url_parts.host, &sr, 0);
-			_r_str_trimstring (url_parts.path, &sr, 0);
+			_r_str_trimstring (&url_parts.host->sr, &sr, 0);
+			_r_str_trimstring (&url_parts.path->sr, &sr, 0);
 
 			string = _r_obj_concatstringrefs (
 				3,
@@ -482,7 +482,7 @@ ULONG_PTR _app_parser_readline (
 		_r_obj_setstringlength (&line->sr, comment_pos * sizeof (WCHAR));
 
 	_r_str_replacechar (&line->sr, L'\t', L' ');
-	_r_str_trimstring (line, &trim_sr, 0);
+	_r_str_trimstring (&line->sr, &trim_sr, 0);
 
 	if (_r_obj_isstringempty2 (line))
 		return 0;
@@ -494,8 +494,8 @@ ULONG_PTR _app_parser_readline (
 
 	if (space_pos != SIZE_MAX)
 	{
-		_r_obj_removestring (line, 0, space_pos + 1);
-		_r_str_trimstring (line, &trim_sr, 0);
+		_r_obj_removestring (&line->sr, 0, space_pos + 1);
+		_r_str_trimstring (&line->sr, &trim_sr, 0);
 
 		// check for spaces
 		if (_r_str_findchar (&line->sr, L' ', FALSE) != SIZE_MAX)
