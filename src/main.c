@@ -89,7 +89,7 @@ VOID _app_whitelist_initialize ()
 
 	for (ULONG_PTR i = 0; i < RTL_NUMBER_OF (exclude_hosts); i++)
 	{
-		_r_obj_addhashtableitem (config.exclude_table, _r_str_gethash3 (&exclude_hosts[i], TRUE), NULL);
+		_r_obj_addhashtableitem (config.exclude_table, _r_str_gethash2 (&exclude_hosts[i], TRUE), NULL);
 	}
 
 	_r_queuedlock_releaseexclusive (&exclude_lock);
@@ -206,7 +206,7 @@ PR_STRING _app_print_getsourcetext (
 	}
 	else
 	{
-		if (_r_inet_queryurlparts (source_data->url, PR_URLPARTS_HOST | PR_URLPARTS_PATH, &url_parts))
+		if (_r_inet_queryurlparts (&source_data->url->sr, PR_URLPARTS_HOST | PR_URLPARTS_PATH, &url_parts))
 		{
 			pos = _r_str_findchar (&url_parts.path->sr, L'?', FALSE);
 
@@ -254,7 +254,7 @@ PR_STRING _app_print_gettext (
 		string = _app_print_getsourcetext (source_data);
 
 		_r_obj_appendstringbuilder (&sb, L" ");
-		_r_obj_appendstringbuilder2 (&sb, string);
+		_r_obj_appendstringbuilder2 (&sb, &string->sr);
 
 		_r_obj_dereference (string);
 	}
@@ -330,7 +330,7 @@ VOID _app_print_status (
 
 			string = _app_print_gettext (status, source_data, text);
 
-			_r_console_writestring2 (string);
+			_r_console_writestring2 (&string->sr);
 
 			_r_queuedlock_releaseexclusive (&console_lock);
 
@@ -437,22 +437,22 @@ NTSTATUS _app_hosts_writeheader ()
 			continue;
 
 		_r_obj_appendstringbuilder (&sb, L"# ");
-		_r_obj_appendstringbuilder2 (&sb, source_data->url);
-		_r_obj_appendstringbuilder2 (&sb, config.eol);
+		_r_obj_appendstringbuilder2 (&sb, &source_data->url->sr);
+		_r_obj_appendstringbuilder2 (&sb, &config.eol->sr);
 	}
 
 	if (!config.is_hostonly)
 	{
-		_r_obj_appendstringbuilder2 (&sb, config.eol);
+		_r_obj_appendstringbuilder2 (&sb, &config.eol->sr);
 		_r_obj_appendstringbuilder (&sb, L"127.0.0.1 localhost");
 
-		_r_obj_appendstringbuilder2 (&sb, config.eol);
+		_r_obj_appendstringbuilder2 (&sb, &config.eol->sr);
 		_r_obj_appendstringbuilder (&sb, L"::1 localhost");
 
-		_r_obj_appendstringbuilder2 (&sb, config.eol);
+		_r_obj_appendstringbuilder2 (&sb, &config.eol->sr);
 	}
 
-	_r_obj_appendstringbuilder2 (&sb, config.eol);
+	_r_obj_appendstringbuilder2 (&sb, &config.eol->sr);
 
 	status = _app_hosts_writestring (config.hfile, sb.string);
 
@@ -488,7 +488,7 @@ ULONG_PTR _app_parser_readline (
 		return 0;
 
 	if (context->flags & ACTION_READ_SOURCE)
-		return _r_str_gethash2 (line, TRUE);
+		return _r_str_gethash2 (&line->sr, TRUE);
 
 	space_pos = _r_str_findchar (&line->sr, L' ', FALSE);
 
@@ -506,7 +506,7 @@ ULONG_PTR _app_parser_readline (
 	}
 
 	// check first char
-	for (ULONG_PTR i = 0; i < _r_str_getlength3 (&blacklist_first_char_sr); i++)
+	for (ULONG_PTR i = 0; i < _r_str_getlength2 (&blacklist_first_char_sr); i++)
 	{
 		if (line->buffer[0] == blacklist_first_char_sr.buffer[i])
 			return 0;
@@ -522,9 +522,9 @@ ULONG_PTR _app_parser_readline (
 		blacklist_sr = &blacklist_normal_sr;
 	}
 
-	for (ULONG_PTR i = 0; i < _r_str_getlength2 (line); i++)
+	for (ULONG_PTR i = 0; i < _r_str_getlength2 (&line->sr); i++)
 	{
-		for (ULONG_PTR j = 0; j < _r_str_getlength3 (blacklist_sr); j++)
+		for (ULONG_PTR j = 0; j < _r_str_getlength2 (blacklist_sr); j++)
 		{
 			if (line->buffer[i] == blacklist_sr->buffer[j])
 				return 0;
@@ -533,7 +533,7 @@ ULONG_PTR _app_parser_readline (
 
 	_r_str_tolower (&line->sr); // cosmetics
 
-	return _r_str_gethash2 (line, TRUE);
+	return _r_str_gethash2 (&line->sr, TRUE);
 }
 
 VOID NTAPI _app_sources_parsethread (
@@ -563,7 +563,7 @@ VOID NTAPI _app_sources_parsethread (
 	{
 		if (config.hsession)
 		{
-			if (!_r_inet_openurl (config.hsession, context->source_data->url, &hconnect, &hrequest, NULL))
+			if (!_r_inet_openurl (config.hsession, &context->source_data->url->sr, &hconnect, &hrequest, NULL))
 			{
 				_app_print_status (FACILITY_ERROR, NtLastError (), context->source_data, L"[winhttp]");
 			}
@@ -629,7 +629,7 @@ BOOLEAN _app_sources_additem (
 	NTSTATUS status;
 
 	if (!hash)
-		hash = _r_str_gethash2 (string, TRUE);
+		hash = _r_str_gethash2 (&string->sr, TRUE);
 
 	if ((flags & SRC_FLAG_IS_FILEPATH) || !_app_util_isurl (string))
 	{
@@ -889,7 +889,7 @@ VOID _app_sources_processfile (
 
 					is_found = FALSE;
 
-					checksum = _r_str_gethash2 (line_string, TRUE);
+					checksum = _r_str_gethash2 (&line_string->sr, TRUE);
 
 					_r_queuedlock_acquireshared (&dnscrypt_lock);
 
@@ -1091,7 +1091,7 @@ VOID _app_parsearguments (
 	{
 		_r_obj_initializestringref (&key_name, argv[i]);
 
-		if (_r_str_getlength3 (&key_name) <= 2)
+		if (_r_str_getlength2 (&key_name) <= 2)
 			continue;
 
 		if (*key_name.buffer == L'/' || *key_name.buffer == L'-')
@@ -1111,7 +1111,7 @@ VOID _app_parsearguments (
 			if (!key_value.length)
 				continue;
 
-			_r_obj_movereference (&config.hosts_destination, _r_obj_createstring3 (&key_value));
+			_r_obj_movereference (&config.hosts_destination, _r_obj_createstring2 (&key_value));
 		}
 		else if (_r_str_isequal2 (&key_name, L"dnscrypt", TRUE))
 		{
