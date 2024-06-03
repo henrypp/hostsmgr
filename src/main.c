@@ -1,5 +1,5 @@
 // hostsmgr
-// Copyright (c) 2016-2024 Henry++
+// Copyright (c) 2016-2025 Henry++
 
 #include "main.h"
 
@@ -211,12 +211,12 @@ PR_STRING _app_print_getsourcetext (
 			pos = _r_str_findchar (&url_parts.path->sr, L'?', FALSE);
 
 			if (pos != SIZE_MAX)
-				_r_obj_setstringlength (&url_parts.path->sr, pos * sizeof (WCHAR));
+				_r_str_setlength (&url_parts.path->sr, pos * sizeof (WCHAR));
 
 			// compact
-			_r_obj_movereference (&url_parts.host, _r_path_compact (url_parts.host, 20));
+			_r_obj_movereference (&url_parts.host, _r_path_compact (&url_parts.host->sr, 20));
 
-			_r_obj_movereference (&url_parts.path, _r_path_compact (url_parts.path, 42));
+			_r_obj_movereference (&url_parts.path, _r_path_compact (&url_parts.path->sr, 42));
 
 			_r_str_trimstring (&url_parts.host->sr, &sr, 0);
 			_r_str_trimstring (&url_parts.path->sr, &sr, 0);
@@ -479,7 +479,7 @@ ULONG_PTR _app_parser_readline (
 	comment_pos = _r_str_findchar (&line->sr, L'#', FALSE);
 
 	if (comment_pos != SIZE_MAX)
-		_r_obj_setstringlength (&line->sr, comment_pos * sizeof (WCHAR));
+		_r_str_setlength (&line->sr, comment_pos * sizeof (WCHAR));
 
 	_r_str_replacechar (&line->sr, L'\t', L' ');
 	_r_str_trimstring (&line->sr, &trim_sr, 0);
@@ -537,8 +537,7 @@ ULONG_PTR _app_parser_readline (
 }
 
 VOID NTAPI _app_sources_parsethread (
-	_In_ PVOID arglist,
-	_In_ ULONG busy_count
+	_In_ PVOID arglist
 )
 {
 	PSOURCE_CONTEXT context;
@@ -663,12 +662,12 @@ BOOLEAN _app_sources_additem (
 			disposition_flag = FILE_OPEN_IF;
 		}
 
-		if (_r_fs_exists (path->buffer))
-			_r_fs_setattributes (path->buffer, NULL, FILE_ATTRIBUTE_NORMAL);
+		if (_r_fs_exists (&path->sr))
+			_r_fs_setattributes ( NULL, &path->sr,FILE_ATTRIBUTE_NORMAL);
 	}
 
 	status = _r_fs_createfile (
-		path->buffer,
+		&path->sr,
 		disposition_flag,
 		access_flag,
 		FILE_SHARE_READ,
@@ -798,8 +797,7 @@ VOID _app_sources_processfile (
 	_Inout_ PSOURCE_CONTEXT context
 )
 {
-	static R_STRINGREF sr = PR_STRINGREF_INIT (L" ");
-
+	R_STRINGREF sr = PR_STRINGREF_INIT (L" ");
 	R_BYTEREF line_sr;
 	PR_BYTE bytes;
 	PR_STRING buffer;
@@ -815,7 +813,7 @@ VOID _app_sources_processfile (
 
 	context->item_count = 0;
 
-	status = _r_fs_readfile (context->source_data->hfile, &bytes);
+	status = _r_fs_readbytes (context->source_data->hfile, &bytes);
 
 	if (!NT_SUCCESS (status))
 		return;
@@ -971,7 +969,7 @@ VOID _app_startupdate ()
 	NTSTATUS status;
 
 	status = _r_fs_createfile (
-		config.hosts_file_temp->buffer,
+		&config.hosts_file_temp->sr,
 		FILE_OVERWRITE_IF,
 		GENERIC_WRITE,
 		FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -1043,12 +1041,12 @@ VOID _app_startupdate ()
 
 	SAFE_DELETE_HANDLE (config.hfile); // required!
 
-	_r_fs_setattributes (config.hosts_file->buffer, NULL, FILE_ATTRIBUTE_NORMAL);
+	_r_fs_setattributes (NULL, &config.hosts_file->sr, FILE_ATTRIBUTE_NORMAL);
 
 	if (!config.is_nobackup)
-		_r_fs_movefile (config.hosts_file->buffer, config.hosts_file_backup->buffer, FALSE);
+		_r_fs_movefile (&config.hosts_file->sr, &config.hosts_file_backup->sr, FALSE);
 
-	_r_fs_movefile (config.hosts_file_temp->buffer, config.hosts_file->buffer, FALSE);
+	_r_fs_movefile (&config.hosts_file_temp->sr, &config.hosts_file->sr, FALSE);
 
 	_r_format_number (hosts_format, RTL_NUMBER_OF (hosts_format), config.total_hosts);
 	_r_format_bytesize64 (size_format, RTL_NUMBER_OF (size_format), config.total_size);
@@ -1095,7 +1093,7 @@ VOID _app_parsearguments (
 			continue;
 
 		if (*key_name.buffer == L'/' || *key_name.buffer == L'-')
-			_r_obj_skipstringlength (&key_name, sizeof (WCHAR));
+			_r_str_skiplength (&key_name, sizeof (WCHAR));
 
 		if (argc > (i + 1))
 		{
@@ -1138,7 +1136,7 @@ VOID _app_parsearguments (
 			if (!key_value.length)
 				continue;
 
-			status = _r_str_environmentexpandstring (&key_value, &string);
+			status = _r_str_environmentexpandstring (NULL, &key_value, &string);
 
 			if (NT_SUCCESS (status))
 				_r_obj_movereference (&config.hosts_file, string);
@@ -1174,13 +1172,14 @@ VOID _app_parsearguments (
 
 VOID _app_setdefaults ()
 {
+	R_STRINGREF sr;
 	PR_STRING string;
 	NTSTATUS status;
 
 	_r_freelist_initialize (&context_list, sizeof (SOURCE_CONTEXT), 12);
 
-	config.sources_table = _r_obj_createhashtable_ex (sizeof (SOURCE_INFO_DATA), 64, NULL);
-	config.exclude_table = _r_obj_createhashtable_ex (sizeof (BOOLEAN), 1024, NULL);
+	config.sources_table = _r_obj_createhashtable (sizeof (SOURCE_INFO_DATA), 64, NULL);
+	config.exclude_table = _r_obj_createhashtable (sizeof (BOOLEAN), 1024, NULL);
 	config.exclude_table_mask = _r_obj_createhashtablepointer (1024);
 	config.dnscrypt_list = _r_obj_createhashtablepointer (1024);
 
@@ -1199,12 +1198,14 @@ VOID _app_setdefaults ()
 
 	_r_obj_movereference (&config.cache_dir, _r_obj_concatstrings (2, _r_app_getprofiledirectory ()->buffer, L"\\cache"));
 
-	_r_fs_createdirectory (config.cache_dir->buffer, 0);
+	_r_fs_createdirectory (&config.cache_dir->sr);
 
 	// set hosts path
 	if (_r_obj_isstringempty (config.hosts_file))
 	{
-		status = _r_path_search (L".\\hosts", NULL, &string);
+		_r_obj_initializestringref (&sr, L".\\hosts");
+
+		status = _r_path_search (NULL, &sr, NULL, &string);
 
 		if (NT_SUCCESS (status))
 			_r_obj_movereference (&config.hosts_file, string);
@@ -1248,7 +1249,7 @@ INT _cdecl wmain (
 
 	_app_startupdate ();
 
-	_r_fs_deletedirectory (config.cache_dir->buffer, FALSE); // no recurse
+	_r_fs_deletedirectory (&config.cache_dir->sr, FALSE); // no recurse
 
 	return ERROR_SUCCESS;
 }
