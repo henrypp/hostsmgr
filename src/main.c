@@ -1138,7 +1138,7 @@ VOID _app_parsearguments (
 			if (!key_value.length)
 				continue;
 
-			status = _r_str_environmentexpandstring (&key_value, &string);
+			status = _r_str_environmentexpandstring (NULL, &key_value, &string);
 
 			if (NT_SUCCESS (status))
 				_r_obj_movereference (&config.hosts_file, string);
