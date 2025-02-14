@@ -1,5 +1,5 @@
 // hostsmgr
-// Copyright (c) 2016-2024 Henry++
+// Copyright (c) 2016-2025 Henry++
 
 #pragma once
 
@@ -8,4 +8,4 @@
 #define APP_VERSION L"2.2"
 #define APP_VERSION_RES 2,2,0,0
 #define APP_AUTHOR L"Henry++"
-#define APP_COPYRIGHT L"(c) 2016-2024 " APP_AUTHOR L". All Rights Reversed."
+#define APP_COPYRIGHT L"(c) 2016-2025 " APP_AUTHOR L". All Rights Reversed."
