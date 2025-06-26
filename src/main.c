@@ -89,14 +89,14 @@ VOID _app_whitelist_initialize ()
 
 	for (ULONG_PTR i = 0; i < RTL_NUMBER_OF (exclude_hosts); i++)
 	{
-		_r_obj_addhashtableitem (config.exclude_table, _r_str_gethash2 (&exclude_hosts[i], TRUE), NULL);
+		_r_obj_addhashtableitem (config.exclude_table, _r_str_gethash (&exclude_hosts[i], TRUE), NULL);
 	}
 
 	_r_queuedlock_releaseexclusive (&exclude_lock);
 }
 
 VOID _app_whitelist_additem (
-	_In_ ULONG_PTR hash_code,
+	_In_ ULONG hash_code,
 	_In_ PR_STRING host_string,
 	_In_ BOOLEAN is_glob
 )
@@ -128,7 +128,7 @@ BOOLEAN _app_whitelist_isglob (
 }
 
 BOOLEAN _app_whitelist_isfound (
-	_In_ ULONG_PTR hash_code,
+	_In_ ULONG hash_code,
 	_In_ PR_STRING host_string
 )
 {
@@ -313,24 +313,24 @@ VOID _app_print_status (
 			if (facility == FACILITY_SUCCESS)
 			{
 				_r_console_setcolor (FOREGROUND_GREEN);
-				_r_console_writestring (L"[success]");
+				_r_console_writestring2 (L"[success]");
 			}
 			else if (facility == FACILITY_WARNING)
 			{
 				_r_console_setcolor (FOREGROUND_GREEN | FOREGROUND_RED);
-				_r_console_writestring (L"[warning]");
+				_r_console_writestring2 (L"[warning]");
 			}
 			else if (facility == FACILITY_ERROR)
 			{
 				_r_console_setcolor (FOREGROUND_RED);
-				_r_console_writestring (L"[failure]");
+				_r_console_writestring2 (L"[failure]");
 			}
 
 			_r_console_setcolor (config.con_attr);
 
 			string = _app_print_gettext (status, source_data, text);
 
-			_r_console_writestring2 (&string->sr);
+			_r_console_writestring (&string->sr);
 
 			_r_queuedlock_releaseexclusive (&console_lock);
 
@@ -343,11 +343,11 @@ VOID _app_print_status (
 		{
 			_app_print_status (FACILITY_TITLE, 0, NULL, L"Usage");
 
-			_r_console_writestring (L"hostsmgr -ip 127.0.0.1 -os win -path \".\\out_file\"\r\n");
+			_r_console_writestring2 (L"hostsmgr -ip 127.0.0.1 -os win -path \".\\out_file\"\r\n");
 
 			_app_print_status (FACILITY_TITLE, 0, NULL, L"Command line");
 
-			_r_console_writestring (
+			_r_console_writestring2 (
 				L"-path       output file location (def. \".\\hosts\")\r\n" \
 				L"-ip         ip address to be set as resolver (def. 0.0.0.0)\r\n" \
 				L"-os         new line format; \"win\", \"linux\" or \"mac\" (def. \"win\")\r\n" \
@@ -462,16 +462,15 @@ NTSTATUS _app_hosts_writeheader ()
 }
 
 _Success_ (return != 0)
-ULONG_PTR _app_parser_readline (
+ULONG _app_parser_readline (
 	_In_ PSOURCE_CONTEXT context,
 	_Inout_ PR_STRING line
 )
 {
-	static R_STRINGREF blacklist_normal_sr = PR_STRINGREF_INIT (L"#<>!@$%^&(){}\"':;/\\[]=*? ");
-	static R_STRINGREF blacklist_dnscrypt_sr = PR_STRINGREF_INIT (L"#<>!@$%^&(){}\"':;/\\ ");
-	static R_STRINGREF blacklist_first_char_sr = PR_STRINGREF_INIT (L".");
-	static R_STRINGREF trim_sr = PR_STRINGREF_INIT (L"\r\n\t\\/ ");
-
+	R_STRINGREF blacklist_normal_sr = PR_STRINGREF_INIT (L"#<>!@$%^&(){}\"':;/\\[]=*? ");
+	R_STRINGREF blacklist_dnscrypt_sr = PR_STRINGREF_INIT (L"#<>!@$%^&(){}\"':;/\\ ");
+	R_STRINGREF blacklist_first_char_sr = PR_STRINGREF_INIT (L".");
+	R_STRINGREF trim_sr = PR_STRINGREF_INIT (L"\r\n\t\\/ ");
 	PR_STRINGREF blacklist_sr;
 	ULONG_PTR comment_pos;
 	ULONG_PTR space_pos;
@@ -488,7 +487,7 @@ ULONG_PTR _app_parser_readline (
 		return 0;
 
 	if (context->flags & ACTION_READ_SOURCE)
-		return _r_str_gethash2 (&line->sr, TRUE);
+		return _r_str_gethash (&line->sr, TRUE);
 
 	space_pos = _r_str_findchar (&line->sr, L' ', FALSE);
 
@@ -533,7 +532,7 @@ ULONG_PTR _app_parser_readline (
 
 	_r_str_tolower (&line->sr); // cosmetics
 
-	return _r_str_gethash2 (&line->sr, TRUE);
+	return _r_str_gethash (&line->sr, TRUE);
 }
 
 VOID NTAPI _app_sources_parsethread (
@@ -614,7 +613,7 @@ VOID _app_queue_item (
 }
 BOOLEAN _app_sources_additem (
 	_In_ PR_STRING string,
-	_In_opt_ ULONG_PTR hash,
+	_In_opt_ ULONG hash,
 	_In_opt_ ULONG flags
 )
 {
@@ -628,7 +627,7 @@ BOOLEAN _app_sources_additem (
 	NTSTATUS status;
 
 	if (!hash)
-		hash = _r_str_gethash2 (&string->sr, TRUE);
+		hash = _r_str_gethash (&string->sr, TRUE);
 
 	if ((flags & SRC_FLAG_IS_FILEPATH) || !_app_util_isurl (string))
 	{
@@ -806,7 +805,7 @@ VOID _app_sources_processfile (
 	LPSTR tok_buffer = NULL;
 	LPSTR token;
 	ULONG_PTR enum_key;
-	ULONG_PTR hash_code;
+	ULONG hash_code;
 	ULONG checksum;
 	BOOLEAN is_found;
 	NTSTATUS status;
@@ -887,7 +886,7 @@ VOID _app_sources_processfile (
 
 					is_found = FALSE;
 
-					checksum = _r_str_gethash2 (&line_string->sr, TRUE);
+					checksum = _r_str_gethash (&line_string->sr, TRUE);
 
 					_r_queuedlock_acquireshared (&dnscrypt_lock);
 
