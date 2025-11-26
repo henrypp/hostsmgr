@@ -288,6 +288,7 @@ VOID _app_print_status (
 			_app_print_status (FACILITY_TITLE, 0, NULL, L"Configuration");
 
 			_r_console_writestringformat (
+				NULL,
 				L"Path: %s\r\nResolver: %s\r\nCaching: %s\r\nDnscrypt mode: %s\r\n",
 				_r_obj_getstring (config.hosts_file),
 				config.is_hostonly ? L"<disabled>" : _r_obj_getstring (config.hosts_destination),
@@ -300,7 +301,7 @@ VOID _app_print_status (
 
 		case FACILITY_TITLE:
 		{
-			_r_console_writestringformat (L"\r\n%s:\r\n", text);
+			_r_console_writestringformat (NULL, L"\r\n%s:\r\n", text);
 			break;
 		}
 
@@ -312,25 +313,25 @@ VOID _app_print_status (
 
 			if (facility == FACILITY_SUCCESS)
 			{
-				_r_console_setcolor (FOREGROUND_GREEN);
-				_r_console_writestring2 (L"[success]");
+				_r_console_setcolor (NULL, FOREGROUND_GREEN);
+				_r_console_writestring2 (NULL, L"[success]");
 			}
 			else if (facility == FACILITY_WARNING)
 			{
-				_r_console_setcolor (FOREGROUND_GREEN | FOREGROUND_RED);
-				_r_console_writestring2 (L"[warning]");
+				_r_console_setcolor (NULL, FOREGROUND_GREEN | FOREGROUND_RED);
+				_r_console_writestring2 (NULL, L"[warning]");
 			}
 			else if (facility == FACILITY_ERROR)
 			{
-				_r_console_setcolor (FOREGROUND_RED);
-				_r_console_writestring2 (L"[failure]");
+				_r_console_setcolor (NULL, FOREGROUND_RED);
+				_r_console_writestring2 (NULL, L"[failure]");
 			}
 
-			_r_console_setcolor (config.con_attr);
+			_r_console_setcolor (NULL, config.con_attr);
 
 			string = _app_print_gettext (status, source_data, text);
 
-			_r_console_writestring (&string->sr);
+			_r_console_writestring (NULL, &string->sr);
 
 			_r_queuedlock_releaseexclusive (&console_lock);
 
@@ -343,11 +344,12 @@ VOID _app_print_status (
 		{
 			_app_print_status (FACILITY_TITLE, 0, NULL, L"Usage");
 
-			_r_console_writestring2 (L"hostsmgr -ip 127.0.0.1 -os win -path \".\\out_file\"\r\n");
+			_r_console_writestring2 (NULL, L"hostsmgr -ip 127.0.0.1 -os win -path \".\\out_file\"\r\n");
 
 			_app_print_status (FACILITY_TITLE, 0, NULL, L"Command line");
 
 			_r_console_writestring2 (
+				NULL,
 				L"-path       output file location (def. \".\\hosts\")\r\n" \
 				L"-ip         ip address to be set as resolver (def. 0.0.0.0)\r\n" \
 				L"-os         new line format; \"win\", \"linux\" or \"mac\" (def. \"win\")\r\n" \
@@ -1052,6 +1054,7 @@ VOID _app_startupdate ()
 	_r_format_bytesize64 (new_size_format, RTL_NUMBER_OF (new_size_format), new_size);
 
 	_r_console_writestringformat (
+		NULL,
 		L"\r\nFinished %" TEXT (PR_LONG) L" sources with %s items and %s into %s in %.03f seconds...\r\n",
 		config.total_sources,
 		hosts_format,
@@ -1218,7 +1221,7 @@ VOID _app_setdefaults ()
 	if (_r_obj_isstringempty (config.eol))
 		config.eol = _r_obj_createstring (L"\r\n"); // windows
 
-	config.con_attr = _r_console_getcolor ();
+	config.con_attr = _r_console_getcolor (NULL);
 }
 
 INT _cdecl wmain (
@@ -1231,7 +1234,7 @@ INT _cdecl wmain (
 	if (!_r_app_initialize (NULL))
 		return ERROR_APP_INIT_FAILURE;
 
-	_r_console_writestringformat (L"%s %s\r\n%s\r\n", _r_app_getname (), _r_app_getversion (), _r_app_getcopyright ());
+	_r_console_writestringformat (NULL, L"%s %s\r\n%s\r\n", _r_app_getname (), _r_app_getversion (), _r_app_getcopyright ());
 
 	if (argc <= 1)
 	{
