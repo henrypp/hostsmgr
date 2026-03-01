@@ -14,6 +14,7 @@
     <LocalDebuggerCommandArguments>-ip 0.0.0.0 -path ".\hosts"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)bin\$(PlatformArchitecture)\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerCommandArgumentsHistory>-ip 0.0.0.0 -path ".\hosts"|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <LocalDebuggerCommandArguments>-ip 0.0.0.0 -path ".\hosts"</LocalDebuggerCommandArguments>
