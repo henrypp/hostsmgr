@@ -663,7 +663,7 @@ BOOLEAN _app_sources_additem (
 			disposition_flag = FILE_OPEN_IF;
 		}
 
-		if (_r_fs_exists (&path->sr))
+		if (_r_fs_isexists (&path->sr))
 			_r_fs_setattributes ( NULL, &path->sr,FILE_ATTRIBUTE_NORMAL);
 	}
 
