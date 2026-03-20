@@ -34,12 +34,12 @@ Console tool for sysadmins and other peoples who need to autoupdate "hosts" file
 
 ### Donate:
 - [Bitcoin](https://www.blockchain.com/btc/address/1LrRTXPsvHcQWCNZotA9RcwjsGcRghG96c) (BTC)
-- [Ethereum](https://www.blockchain.com/explorer/addresses/eth/0xe2C84A62eb2a4EF154b19bec0c1c106734B95960) (ETC)
-- [Paypal](https://paypal.me/henrypp) (USD)
+- [Ethereum](https://www.blockchain.com/explorer/addresses/eth/0xe2C84A62eb2a4EF154b19bec0c1c106734B95960) (ETH)
 - [Yandex Money](https://yoomoney.ru/to/4100115776040583) (RUB)
+- [Paypal](https://paypal.me/henrypp) (USD)
 
 ### GPG Signature:
-Binaries have GPG signature `hostsmgr.scr.sig` in application folder.
+Binaries have GPG signature `hostsmgr.exe.sig` in application folder.
 
 - Public key: [pubkey.asc](https://raw.githubusercontent.com/henrypp/builder/master/pubkey.asc) ([pgpkeys.eu](https://pgpkeys.eu/pks/lookup?op=index&fingerprint=on&search=0x5635B5FD))
 - Key ID: 0x5635B5FD
@@ -48,4 +48,4 @@ Binaries have GPG signature `hostsmgr.scr.sig` in application folder.
 - Website: [github.com/henrypp](https://github.com/henrypp)
 - Support: sforce5@mail.ru
 
-(c) 2016-2025 Henry++
+(c) 2016-2026 Henry++
