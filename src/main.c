@@ -1,5 +1,5 @@
 // hostsmgr
-// Copyright (c) 2016-2025 Henry++
+// Copyright (c) 2016-2026 Henry++
 
 #include "main.h"
 
@@ -206,7 +206,7 @@ PR_STRING _app_print_getsourcetext (
 	}
 	else
 	{
-		if (_r_inet_queryurlparts (&source_data->url->sr, PR_URLPARTS_HOST | PR_URLPARTS_PATH, &url_parts))
+		if (_r_inet_queryurlparts (&url_parts, &source_data->url->sr, PR_URLPARTS_HOST | PR_URLPARTS_PATH))
 		{
 			pos = _r_str_findchar (&url_parts.path->sr, L'?', FALSE);
 
@@ -577,7 +577,7 @@ VOID NTAPI _app_sources_parsethread (
 				// query content lastmod
 				lastmod = _r_inet_querylastmodified (hrequest);
 
-				_r_unixtime_to_filetime (lastmod, &remote_timestamp);
+				_r_unixtime_to_filetime (&remote_timestamp, lastmod);
 
 				_r_fs_gettimestamp (context->source_data->hfile, NULL, NULL, &local_timestamp);
 
