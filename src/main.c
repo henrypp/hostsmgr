@@ -394,7 +394,7 @@ NTSTATUS _app_hosts_writestring (
 	PR_BYTE bytes;
 	NTSTATUS status;
 
-	status = _r_str_unicode2multibyte (&string->sr, &bytes);
+	status = _r_str_unicode2multibyte (&bytes, &string->sr);
 
 	if (!NT_SUCCESS (status))
 		return status;
@@ -570,7 +570,7 @@ VOID NTAPI _app_sources_parsethread (
 			else
 			{
 				// query content length
-				_r_fs_getsize2 (context->source_data->hfile, NULL, &local_size);
+				_r_fs_getsize2 (&local_size, NULL, context->source_data->hfile);
 
 				remote_size = _r_inet_querycontentlength (hrequest);
 
@@ -664,20 +664,10 @@ BOOLEAN _app_sources_additem (
 		}
 
 		if (_r_fs_isexists (&path->sr))
-			_r_fs_setattributes ( NULL, &path->sr,FILE_ATTRIBUTE_NORMAL);
+			_r_fs_setattributes (NULL, &path->sr, FILE_ATTRIBUTE_NORMAL);
 	}
 
-	status = _r_fs_createfile (
-		&path->sr,
-		disposition_flag,
-		access_flag,
-		FILE_SHARE_READ,
-		attributes_flag,
-		create_flag,
-		FALSE,
-		NULL,
-		&hfile
-	);
+	status = _r_fs_createfile (&hfile, &path->sr, disposition_flag, access_flag, FILE_SHARE_READ, attributes_flag, create_flag, FALSE, NULL);
 
 	if (!NT_SUCCESS (status))
 	{
@@ -832,7 +822,7 @@ VOID _app_sources_processfile (
 	{
 		_r_obj_initializebyteref (&line_sr, token);
 
-		status = _r_str_multibyte2unicode (&line_sr, &line_string);
+		status = _r_str_multibyte2unicode (&line_string, &line_sr);
 
 		if (NT_SUCCESS (status))
 		{
@@ -969,17 +959,7 @@ VOID _app_startupdate ()
 	LONG64 start_time;
 	NTSTATUS status;
 
-	status = _r_fs_createfile (
-		&config.hosts_file_temp->sr,
-		FILE_OVERWRITE_IF,
-		GENERIC_WRITE,
-		FILE_SHARE_READ | FILE_SHARE_WRITE,
-		FILE_ATTRIBUTE_NORMAL,
-		0,
-		FALSE,
-		NULL,
-		&config.hfile
-	);
+	status = _r_fs_createfile (&config.hfile, &config.hosts_file_temp->sr, FILE_OVERWRITE_IF, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_ATTRIBUTE_NORMAL, 0, FALSE, NULL);
 
 	if (!NT_SUCCESS (status))
 	{
@@ -1038,7 +1018,7 @@ VOID _app_startupdate ()
 	// process sources
 	_app_sources_parse (ACTION_READ_HOSTS);
 
-	_r_fs_getsize2 (config.hfile, NULL, &new_size);
+	_r_fs_getsize2 (&new_size, NULL, config.hfile);
 
 	SAFE_DELETE_HANDLE (config.hfile); // required!
 
