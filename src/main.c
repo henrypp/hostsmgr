@@ -570,7 +570,7 @@ VOID NTAPI _app_sources_parsethread (
 			else
 			{
 				// query content length
-				_r_fs_getsize2 (&local_size, NULL, context->source_data->hfile);
+				_r_fs_getsize (&local_size, NULL, context->source_data->hfile);
 
 				remote_size = _r_inet_querycontentlength (hrequest);
 
@@ -1018,7 +1018,7 @@ VOID _app_startupdate ()
 	// process sources
 	_app_sources_parse (ACTION_READ_HOSTS);
 
-	_r_fs_getsize2 (&new_size, NULL, config.hfile);
+	_r_fs_getsize (&new_size, NULL, config.hfile);
 
 	SAFE_DELETE_HANDLE (config.hfile); // required!
 
