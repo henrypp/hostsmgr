@@ -394,7 +394,7 @@ NTSTATUS _app_hosts_writestring (
 	PR_BYTE bytes;
 	NTSTATUS status;
 
-	status = _r_str_unicode2multibyte (&bytes, &string->sr);
+	status = _r_str_unicode2multibyte (&string->sr, &bytes);
 
 	if (!NT_SUCCESS (status))
 		return status;
@@ -570,7 +570,7 @@ VOID NTAPI _app_sources_parsethread (
 			else
 			{
 				// query content length
-				_r_fs_getsize (&local_size, NULL, context->source_data->hfile);
+				_r_fs_getsize (NULL, context->source_data->hfile, &local_size);
 
 				remote_size = _r_inet_querycontentlength (hrequest);
 
@@ -822,7 +822,7 @@ VOID _app_sources_processfile (
 	{
 		_r_obj_initializebyteref (&line_sr, token);
 
-		status = _r_str_multibyte2unicode (&line_string, &line_sr);
+		status = _r_str_multibyte2unicode (&line_sr, &line_string);
 
 		if (NT_SUCCESS (status))
 		{
@@ -1018,7 +1018,7 @@ VOID _app_startupdate ()
 	// process sources
 	_app_sources_parse (ACTION_READ_HOSTS);
 
-	_r_fs_getsize (&new_size, NULL, config.hfile);
+	_r_fs_getsize (NULL, config.hfile, &new_size);
 
 	SAFE_DELETE_HANDLE (config.hfile); // required!
 
@@ -1187,7 +1187,7 @@ VOID _app_setdefaults ()
 	{
 		_r_obj_initializestringref (&sr, L".\\hosts");
 
-		status = _r_path_search (NULL, &sr, NULL, &string);
+		status = _r_path_search (&string, NULL, &sr, NULL);
 
 		if (NT_SUCCESS (status))
 			_r_obj_movereference (&config.hosts_file, string);
