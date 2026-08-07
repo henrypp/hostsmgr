@@ -19,7 +19,7 @@ VOID _app_sources_processfile (
 VOID _app_util_downloadfile (
 	_In_ HINTERNET hrequest,
 	_In_ HANDLE hfile,
-	_In_ PFILETIME timestamp
+	_In_ LONG64 timestamp
 )
 {
 	IO_STATUS_BLOCK isb;
@@ -542,10 +542,9 @@ VOID NTAPI _app_sources_parsethread (
 )
 {
 	PSOURCE_CONTEXT context;
-	FILETIME remote_timestamp;
-	FILETIME local_timestamp;
 	HINTERNET hconnect;
 	HINTERNET hrequest;
+	LONG64 local_timestamp;
 	LONG64 remote_size;
 	LONG64 local_size;
 	LONG64 lastmod;
@@ -577,12 +576,10 @@ VOID NTAPI _app_sources_parsethread (
 				// query content lastmod
 				lastmod = _r_inet_querylastmodified (hrequest);
 
-				_r_unixtime_to_filetime (&remote_timestamp, lastmod);
-
 				_r_fs_gettimestamp (context->source_data->hfile, NULL, NULL, &local_timestamp);
 
-				if (!local_size || local_size != remote_size || CompareFileTime (&local_timestamp, &remote_timestamp) == -1)
-					_app_util_downloadfile (hrequest, context->source_data->hfile, &remote_timestamp);
+				if (local_size == 0 || local_size != remote_size || local_timestamp > lastmod)
+					_app_util_downloadfile (hrequest, context->source_data->hfile, lastmod);
 
 				_r_inet_close (hrequest);
 				_r_inet_close (hconnect);
@@ -1118,7 +1115,7 @@ VOID _app_parsearguments (
 			if (!key_value.length)
 				continue;
 
-			status = _r_str_environmentexpandstring (NULL, &key_value, &string);
+			status = _r_str_environmentexpandstring (&string, NULL, &key_value);
 
 			if (NT_SUCCESS (status))
 				_r_obj_movereference (&config.hosts_file, string);
